@@ -258,9 +258,9 @@ The deployed product must complete the full PS5 rental journey twice with two se
 ### Ownership
 
 - **Lucas — Coding and coordination:** repository, shared standards, Rust API, Stripe, deployment, integration, and release decisions.
-- **Anna — Communication and frontend:** design system, navigation, authentication/profile UI, listing forms, copy, accessibility, and team updates.
+- **Anna — Communication and frontend:** design system, navigation, authentication/profile UI, public browse/search/listing pages, listing forms, copy, accessibility, and team updates.
 - **Yichen — Logic and data:** migrations, RLS, availability constraints, state-machine test cases, and Rust rule review.
-- **Lucian — Research and marketplace:** user/competitor research, browse/search/listing pages, seed data, pricing report, and privacy notes.
+- **Lucian — Research and file coordination:** user/competitor research, seed-listing content, pricing report, privacy notes, daily collection of teammate outputs, and preparation of a structured handoff package for Lucas. Lucian is not assigned AI-assisted coding work.
 - **Nasia — Presentation and transaction UI:** checkout, dashboards, fulfillment UI, reviews, QA checklist, demo narrative, and presentation.
 
 ### Daily milestones
@@ -284,6 +284,7 @@ The deployed product must complete the full PS5 rental journey twice with two se
 - Each pull request includes a test result or screenshot and one human review.
 - Merge at one scheduled time each day; Lucas owns integration conflict resolution.
 - Shared contracts are agreed before dependent feature code begins.
+- Lucian maintains a daily backup handoff folder organized by contributor. He does not merge source code; Lucas reviews and integrates collected work into the monorepo.
 
 ## 15. Cost
 

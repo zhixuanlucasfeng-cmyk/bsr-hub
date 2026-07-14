@@ -35,13 +35,14 @@
 
 - Build the design system, responsive navigation, and shared form components.
 - Build sign-up, login, profile, create-listing, and edit-listing interfaces.
+- Build the public home, category, search-results, and listing-detail pages.
 - Write consistent English product copy, empty states, and error messages.
 - Maintain the daily team update and identify cross-person communication gaps.
 - Review mobile accessibility, labels, keyboard use, and color contrast.
 
 ### Required deliverables
 
-- Responsive auth, profile, and listing forms connected to Supabase.
+- Responsive auth, profile, marketplace browsing, listing-detail, and listing-form pages connected to Supabase.
 - Reusable visual components and documented usage.
 - Mobile and accessibility review checklist.
 
@@ -61,21 +62,25 @@
 - RLS tests showing cross-user writes are rejected.
 - Booking and order-state test matrix.
 
-## Lucian — Research and Marketplace
+## Lucian — Research and File Coordination
 
 ### Primary ownership
 
+- Complete the work manually; no Claude or coding agent is required.
 - Research comparable rental, resale, and workspace services and summarize useful patterns.
-- Build the home, category, search-results, and listing-detail pages.
-- Create realistic seed data for PS5s, computers, cameras, tools, studios, printing facilities, and small factories.
+- Prepare realistic listing content for PS5s, computers, cameras, tools, studios, printing facilities, and small factories.
 - Document pricing assumptions, privacy expectations, and future marketplace risks.
-- Verify all public pages reveal only approximate locations.
+- Collect each teammate's daily output in the agreed handoff folder structure.
+- Maintain an inventory showing what was received, what is missing, and which version is newest.
+- Deliver the organized handoff package to Lucas; do not merge or rewrite source code.
 
 ### Required deliverables
 
-- Responsive browse, search, and listing-detail experience.
-- Seed-data script or migration with presentation-ready content.
+- Research notes and presentation-ready listing content in a spreadsheet or Markdown table.
 - Short research and cost summary for the final report.
+- Daily organized code handoff package and inventory for Lucas.
+
+See [Lucian's individual instructions](teammates/Lucian-Individual-Task.md).
 
 ## Nasia — Presentation and Transaction UI
 
