@@ -1,24 +1,39 @@
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+use super::pricing::BillingUnit;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FulfillmentMethod {
+    Pickup,
+    Delivery,
+    OwnerLocation,
+    OnSite,
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct PricingSnapshot {
     pub unit_price_cents: i64,
     pub deposit_cents: i64,
     pub delivery_fee_cents: i64,
     pub service_fee_bps: i64,
+    pub billing_unit: BillingUnit,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QuoteInput {
     pub units: i64,
-    pub wants_delivery: bool,
+    pub fulfillment: FulfillmentMethod,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QuoteBreakdown {
+    pub unit_price_cents: i64,
+    pub billable_units: i64,
+    pub billing_unit: BillingUnit,
     pub base_cents: i64,
     pub service_fee_cents: i64,
     pub delivery_fee_cents: i64,
@@ -64,7 +79,7 @@ pub fn calculate_quote(
         .checked_mul(pricing.service_fee_bps)
         .ok_or(QuoteError::Overflow)?
         / 10_000;
-    let delivery_fee_cents = if input.wants_delivery {
+    let delivery_fee_cents = if input.fulfillment == FulfillmentMethod::Delivery {
         pricing.delivery_fee_cents
     } else {
         0
@@ -76,6 +91,9 @@ pub fn calculate_quote(
         .ok_or(QuoteError::Overflow)?;
 
     Ok(QuoteBreakdown {
+        unit_price_cents: pricing.unit_price_cents,
+        billable_units: input.units,
+        billing_unit: pricing.billing_unit,
         base_cents,
         service_fee_cents,
         delivery_fee_cents,

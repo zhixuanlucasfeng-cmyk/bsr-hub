@@ -6,6 +6,7 @@ use uuid::Uuid;
 use crate::{
     domain::{
         order_state::{OrderAction, OrderState},
+        pricing::BillingUnit,
         quote::PricingSnapshot,
     },
     ports::order_repository::{CreateOrder, OrderRepository, ReserveError, ReservedOrder},
@@ -62,6 +63,7 @@ impl OrderRepository for PostgresOrderRepository {
             deposit_cents: row.get("deposit_cents"),
             delivery_fee_cents: row.get("delivery_fee_cents"),
             service_fee_bps: self.service_fee_bps,
+            billing_unit: BillingUnit::Day,
         })
     }
 

@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::{
     AppState,
-    domain::quote::{QuoteBreakdown, QuoteError, QuoteInput, calculate_quote},
+    domain::quote::{FulfillmentMethod, QuoteBreakdown, QuoteError, QuoteInput, calculate_quote},
     error::ApiError,
     ports::order_repository::ReserveError,
 };
@@ -30,7 +30,11 @@ pub async fn create(
         pricing,
         QuoteInput {
             units: request.units,
-            wants_delivery: request.wants_delivery,
+            fulfillment: if request.wants_delivery {
+                FulfillmentMethod::Delivery
+            } else {
+                FulfillmentMethod::Pickup
+            },
         },
     )
     .map_err(map_quote_error)?;

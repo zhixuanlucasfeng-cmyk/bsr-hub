@@ -10,7 +10,7 @@ use crate::{
     AppState,
     domain::{
         order_state::{OrderAction, OrderState},
-        quote::{QuoteInput, calculate_quote},
+        quote::{FulfillmentMethod, QuoteInput, calculate_quote},
     },
     error::ApiError,
     ports::{
@@ -66,7 +66,11 @@ pub async fn create(
         pricing,
         QuoteInput {
             units: request.units,
-            wants_delivery: request.wants_delivery,
+            fulfillment: if request.wants_delivery {
+                FulfillmentMethod::Delivery
+            } else {
+                FulfillmentMethod::Pickup
+            },
         },
     )
     .map_err(map_quote_error)?;

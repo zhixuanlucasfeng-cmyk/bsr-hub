@@ -5,7 +5,10 @@ use axum::{body::Body, http::Request};
 use core_api::{
     AppState,
     auth::{AuthError, AuthUser, AuthVerifier},
-    domain::quote::{PricingSnapshot, QuoteBreakdown},
+    domain::{
+        pricing::BillingUnit,
+        quote::{PricingSnapshot, QuoteBreakdown},
+    },
     ports::{
         order_repository::{CreateOrder, OrderRepository, ReserveError, ReservedOrder},
         payment_gateway::{CheckoutRequest, CheckoutSession, PaymentError, PaymentGateway},
@@ -28,6 +31,7 @@ impl OrderRepository for FakeOrders {
             deposit_cents: 10_000,
             delivery_fee_cents: 1_500,
             service_fee_bps: 600,
+            billing_unit: BillingUnit::Day,
         })
     }
 
