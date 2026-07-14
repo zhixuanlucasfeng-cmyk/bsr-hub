@@ -6,6 +6,7 @@ pub mod domain;
 pub mod error;
 pub mod http;
 pub mod ports;
+pub mod runner_demo;
 
 use std::sync::Arc;
 
@@ -22,13 +23,22 @@ pub struct AppState {
 }
 
 pub fn app() -> Router {
-    http::health_routes().merge(demo::router())
+    http::health_routes()
+        .merge(demo::router())
+        .merge(runner_demo::router())
 }
 
 pub fn demo_app() -> Router {
     app()
 }
 
+pub fn runner_demo_app() -> Router {
+    http::health_routes().merge(runner_demo::router())
+}
+
 pub fn app_with_state(state: AppState) -> Router {
-    http::routes().with_state(state).merge(demo::router())
+    http::routes()
+        .with_state(state)
+        .merge(demo::router())
+        .merge(runner_demo::router())
 }
