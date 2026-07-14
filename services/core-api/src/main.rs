@@ -12,6 +12,20 @@ use tower_http::cors::CorsLayer;
 
 #[tokio::main]
 async fn main() {
+    if std::env::var("BSR_DEMO_MODE").as_deref() == Ok("true") {
+        let port = std::env::var("PORT")
+            .ok()
+            .and_then(|value| value.parse().ok())
+            .unwrap_or(8080);
+        let application = core_api::demo_app().layer(CorsLayer::permissive());
+        let listener = tokio::net::TcpListener::bind(("0.0.0.0", port))
+            .await
+            .expect("bind demo API");
+        axum::serve(listener, application)
+            .await
+            .expect("serve demo API");
+        return;
+    }
     let config = Config::from_env().expect("invalid core API configuration");
     let pool = PgPoolOptions::new()
         .max_connections(10)

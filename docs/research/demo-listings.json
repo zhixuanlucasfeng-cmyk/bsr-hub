@@ -1,0 +1,14 @@
+[
+  {"id":"ps5-slim","type":"rental","category":"Gaming","title":"PS5 Slim + Two Controllers","city":"Wellesley","state":"MA","priceCents":1200,"unit":"30 minutes","delivery":true},
+  {"id":"ps5-pro","type":"rental","category":"Gaming","title":"PS5 Pro Creator Setup","city":"Newton","state":"MA","priceCents":1800,"unit":"30 minutes","delivery":true},
+  {"id":"macbook","type":"rental","category":"Computers","title":"MacBook Pro M2 14-inch","city":"Needham","state":"MA","priceCents":5200,"unit":"day","delivery":true},
+  {"id":"gaming-pc","type":"rental","category":"Computers","title":"RTX Gaming & Rendering PC","city":"Waltham","state":"MA","priceCents":6800,"unit":"day","delivery":true},
+  {"id":"sony-camera","type":"rental","category":"Cameras","title":"Sony A7 IV Camera Kit","city":"Brookline","state":"MA","priceCents":7500,"unit":"day","delivery":true},
+  {"id":"podcast-kit","type":"rental","category":"Cameras","title":"Two-Person Podcast Kit","city":"Boston","state":"MA","priceCents":4200,"unit":"day","delivery":true},
+  {"id":"tool-set","type":"rental","category":"Tools","title":"Cordless Home Project Tool Set","city":"Dedham","state":"MA","priceCents":2800,"unit":"day","delivery":true},
+  {"id":"laser-cutter","type":"workspace","category":"Maker space","title":"Desktop Laser Cutter Session","city":"Cambridge","state":"MA","priceCents":2200,"unit":"30 minutes","delivery":false},
+  {"id":"photo-studio","type":"workspace","category":"Studio","title":"Natural-Light Photo Studio","city":"Boston","state":"MA","priceCents":3500,"unit":"30 minutes","delivery":false},
+  {"id":"print-shop","type":"workspace","category":"Printing","title":"Small-Batch Print Workshop","city":"Somerville","state":"MA","priceCents":3000,"unit":"30 minutes","delivery":false},
+  {"id":"monitor-sale","type":"sale","category":"Second-hand","title":"Used 27-inch 4K Monitor","city":"Newton","state":"MA","priceCents":16500,"unit":"item","delivery":true},
+  {"id":"camera-sale","type":"sale","category":"Second-hand","title":"Second-Hand Instant Camera","city":"Wellesley","state":"MA","priceCents":6500,"unit":"item","delivery":true}
+]

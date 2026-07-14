@@ -1,0 +1,12 @@
+begin;
+select plan(8);
+select has_table('public', 'listing_images', 'listing images exist');
+select has_table('public', 'listing_availability', 'availability exists');
+select has_table('public', 'payments', 'protected payments exist');
+select has_table('public', 'reviews', 'reviews exist');
+select row_security_active('public', 'listing_images', 'image RLS active');
+select row_security_active('public', 'payments', 'payment RLS active');
+select row_security_active('public', 'reviews', 'review RLS active');
+select col_type_is('public', 'payments', 'amount_cents', 'bigint', 'money uses integer cents');
+select * from finish();
+rollback;

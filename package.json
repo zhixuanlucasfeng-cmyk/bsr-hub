@@ -1,9 +1,23 @@
 {
   "name": "bsr-hub",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "overrides": {
+    "postcss": "$postcss"
+  },
   "scripts": {
-    "check:rust": "cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace"
+    "dev": "npm run dev -w @bsr-hub/web",
+    "demo": "bash scripts/demo.sh",
+    "build": "npm run build -w @bsr-hub/web",
+    "test:web": "npm run test -w @bsr-hub/web",
+    "check:web": "npm run typecheck -w @bsr-hub/web && npm run test -w @bsr-hub/web && npm run build -w @bsr-hub/web",
+    "check:rust": "cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace",
+    "check": "npm run check:rust && npm run check:web"
+  },
+  "devDependencies": {
+    "postcss": "^8.5.10"
   }
 }
-

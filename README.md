@@ -2,6 +2,36 @@
 
 BSR Hub is a U.S. peer-to-peer marketplace for buying, selling, renting products, and booking immovable workspaces. The Rust core API owns money, reservation, order-state, and payment rules.
 
+## Run the complete classroom demo
+
+Requirements: Node.js 22+, npm, and stable Rust. No database, Stripe key, Supabase account, Docker, or real payment information is required.
+
+```bash
+npm install
+npm run demo
+```
+
+Open [http://localhost:3000](http://localhost:3000). Search for the PS5 Slim, request a Rust quote, reserve it, then use the **Demo as** selector to switch between Maya (buyer) and Jordan (seller). Complete protected payment, seller confirmation, activation, return, completion, and review.
+
+The demo API is served at `http://localhost:8080`. Its data is fictional and resets when the Rust process restarts.
+
+## Quality gate
+
+```bash
+npm run check
+```
+
+This checks Rust formatting, Clippy, all Rust tests, web types, web unit tests, and the Next.js production build.
+
+## Project map
+
+- `apps/web`: responsive Next.js marketplace and complete transaction UI.
+- `services/core-api`: Rust/Axum pricing, quote, order, payment, and demo APIs.
+- `supabase`: production-oriented PostgreSQL schema, RLS, and pgTAP evidence.
+- `docs/research`: Lucian's competitor, pricing, privacy, and listing research.
+- `docs/presentation`: Nasia's timed statement and live-demo script.
+- `docs/qa`: Anna/Nasia accessibility, mobile, and end-to-end evidence.
+
 ## Lucas core API
 
 ```bash

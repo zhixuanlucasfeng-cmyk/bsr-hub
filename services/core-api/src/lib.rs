@@ -1,6 +1,7 @@
 pub mod adapters;
 pub mod auth;
 pub mod config;
+pub mod demo;
 pub mod domain;
 pub mod error;
 pub mod http;
@@ -21,9 +22,13 @@ pub struct AppState {
 }
 
 pub fn app() -> Router {
-    http::health_routes()
+    http::health_routes().merge(demo::router())
+}
+
+pub fn demo_app() -> Router {
+    app()
 }
 
 pub fn app_with_state(state: AppState) -> Router {
-    http::routes().with_state(state)
+    http::routes().with_state(state).merge(demo::router())
 }
