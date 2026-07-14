@@ -39,6 +39,10 @@ There is one authenticated user type, not separate buyer and seller accounts. An
 
 The system also has an administrator capability for moderation, but its UI is a stretch goal. Administration can be performed through Supabase during the class demonstration if needed.
 
+### Business model assumption
+
+The MVP displays a configurable platform service fee. The initial demonstration value is 6% (`600` basis points) of the eligible base transaction amount, calculated by Rust and shown before Stripe test checkout. Publishing and browsing are free. This percentage is a product hypothesis to validate, not a permanent price commitment.
+
 ## 4. MVP Scope
 
 ### Required
@@ -196,6 +200,7 @@ Every response uses a stable JSON error shape:
 - `buyer_id` cannot equal `seller_id`.
 - Reviews require a completed order and are limited to one review per reviewer per order.
 - Monetary amounts are stored as integers in cents.
+- The service fee rate is stored as an explicit server-side basis-point configuration; clients cannot supply or override it.
 - Order price snapshots are not recalculated after payment.
 
 ## 9. Order and Delivery States
@@ -228,6 +233,8 @@ For the MVP, the owner arranges delivery and updates its status. A separate cour
 - Rust verifies the Supabase access token and derives the acting user from it.
 - The system never stores card numbers.
 - File uploads enforce image MIME types, size limits, and owner-scoped paths.
+
+Dubizzle is used only as a reference for marketplace verification, listing review, internal communication, reporting, blocking, anti-phishing education, and prohibited-item enforcement. Dubizzle's official Help Center states that it generally does not participate in buyer–seller payments. BSR Hub's proposed delayed seller payout is therefore a distinct future design that would require Stripe Connect or another compliant marketplace payment provider. The two-week MVP only simulates payment, refund, deposit, and payout states.
 
 ## 11. Error Handling
 
