@@ -1,0 +1,18 @@
+begin;
+select plan(14);
+select has_table('public', 'runner_profiles', 'runner profiles exist');
+select has_table('public', 'runner_tasks', 'runner tasks exist');
+select has_table('public', 'runner_task_private_locations', 'private route data exists');
+select has_table('public', 'runner_task_payments', 'protected runner payments exist');
+select has_table('public', 'runner_task_events', 'task audit trail exists');
+select has_table('public', 'runner_completion_secrets', 'completion secrets exist');
+select row_security_active('public', 'runner_profiles', 'runner profile RLS active');
+select row_security_active('public', 'runner_tasks', 'task RLS active');
+select row_security_active('public', 'runner_task_private_locations', 'private route RLS active');
+select row_security_active('public', 'runner_task_payments', 'payment RLS active');
+select row_security_active('public', 'runner_completion_secrets', 'secret RLS active');
+select col_type_is('public', 'runner_tasks', 'total_cents', 'bigint', 'task money uses integer cents');
+select col_type_is('public', 'runner_task_events', 'metadata', 'jsonb', 'event metadata is structured');
+select col_is_pk('public', 'runner_completion_secrets', 'task_id', 'one completion secret per task');
+select * from finish();
+rollback;
