@@ -54,3 +54,32 @@ Key safeguards:
 - public listing queries do not need to expose private street addresses.
 
 See [the core API runbook](docs/runbooks/core-api.md) and [the demo checklist](docs/runbooks/demo-smoke-test.md).
+
+## BSR Runner: the local task marketplace
+
+BSR Runner is the team's second website. Customers post lawful nearby errands or BSR Hub delivery requests; independent adult runners choose work and see their automatic payout before accepting. Exact addresses stay private until assignment, simulated payment stays protected until completion, and Rust controls every task transition.
+
+Run it with the same Node.js and Rust requirements as BSR Hub:
+
+```bash
+npm install
+npm run runner:demo
+```
+
+Open [http://localhost:3001](http://localhost:3001). No database, API key, real identity, real address, or real payment method is needed. The site uses fictional Massachusetts locations and resets from the avatar button.
+
+Suggested full demo:
+
+1. As **Maya · Customer**, post a lawful task and inspect the automatic Rust quote.
+2. As **Jordan · Runner**, open the first package job, accept it, confirm pickup, and start delivery.
+3. Switch to Maya, reopen that job, and complete it with classroom code `482731`.
+4. Switch to Jordan to show the released earnings, then **Alex · Admin** for the safety desk.
+5. Use **Prohibited item — safety test** in the post form to show the server rejecting unsafe work.
+
+Important: this is a classroom MVP, not a production labor or payments service. A U.S. launch requires jurisdiction-specific review of worker classification, insurance, taxes, age/identity checks, background screening, emergency handling, accessibility, payments, and privacy.
+
+Technical references:
+
+- [BSR Runner design](docs/superpowers/specs/2026-07-15-bsr-runner-design.md)
+- [Runner state and role matrix](docs/database/runner-state-matrix.md)
+- [Two-minute presentation script](docs/presentation/bsr-runner-two-minute-demo.md)

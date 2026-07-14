@@ -20,7 +20,7 @@
     "runner:check": "npm run typecheck -w @bsr-hub/runner && npm run test -w @bsr-hub/runner && npm run build -w @bsr-hub/runner",
     "runner:demo": "bash scripts/runner-demo.sh",
     "check:rust": "cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace",
-    "check": "npm run check:rust && npm run check:web"
+    "check": "npm run check:rust && npm run check:web && npm run runner:check"
   },
   "devDependencies": {
     "postcss": "^8.5.10"

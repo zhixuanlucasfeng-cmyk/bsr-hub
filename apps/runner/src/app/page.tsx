@@ -9,7 +9,7 @@ import { RunnerNav, type Screen } from "../components/RunnerNav";
 import { TaskMarketView, TaskTrackingView } from "../components/TaskMarketView";
 import type { AdminSummary, RunnerAction, RunnerApplication, RunnerEarnings, RunnerPersona, RunnerQuote, RunnerTask } from "../lib/contracts";
 
-const API = process.env.NEXT_PUBLIC_RUNNER_API_URL ?? "http://localhost:8080";
+const API = process.env.NEXT_PUBLIC_RUNNER_API_URL ?? "http://127.0.0.1:8080";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API}${path}`, {
