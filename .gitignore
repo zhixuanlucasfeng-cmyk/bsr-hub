@@ -1,3 +1,8 @@
 .superpowers/
 .firecrawl/
 .worktrees/
+.env
+.env.local
+target/
+node_modules/
+.DS_Store

@@ -1,0 +1,65 @@
+openapi: 3.1.0
+info:
+  title: BSR Hub Core API
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /health:
+    get:
+      operationId: health
+      responses:
+        "200":
+          description: Service is healthy
+  /v1/quotes:
+    post:
+      operationId: createQuote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuoteRequest"
+      responses:
+        "200":
+          description: Authoritative USD quote
+  /v1/orders:
+    post:
+      operationId: createOrder
+      security: [{ bearerAuth: [] }]
+      responses:
+        "201":
+          description: Reservation and Stripe test checkout created
+        "409":
+          description: Listing unavailable
+  /v1/orders/{id}/transitions:
+    post:
+      operationId: transitionOrder
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200": { description: State changed }
+        "409": { description: Invalid transition }
+  /v1/stripe/webhook:
+    post:
+      operationId: stripeWebhook
+      responses:
+        "200": { description: Processed or already processed }
+        "400": { description: Invalid signature or payload }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    QuoteRequest:
+      type: object
+      required: [listingId, units, wantsDelivery]
+      properties:
+        listingId: { type: string, format: uuid }
+        units: { type: integer, minimum: 1 }
+        wantsDelivery: { type: boolean }

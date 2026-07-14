@@ -1,0 +1,9 @@
+{
+  "name": "bsr-hub",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "check:rust": "cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace"
+  }
+}
+
