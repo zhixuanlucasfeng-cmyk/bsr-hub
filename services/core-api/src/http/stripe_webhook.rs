@@ -35,10 +35,12 @@ pub async fn receive(
             "Invalid webhook",
         )
     })?;
-    state
-        .orders
-        .apply_payment_event(&event.id, event.order_id)
-        .await
-        .map_err(super::quotes::map_repository_error)?;
+    if let Some(payment) = event.verified_payment() {
+        state
+            .orders
+            .apply_payment_event(payment)
+            .await
+            .map_err(super::quotes::map_repository_error)?;
+    }
     Ok(StatusCode::OK)
 }

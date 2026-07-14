@@ -4,6 +4,7 @@ use sha2::Sha256;
 use subtle::ConstantTimeEq;
 use thiserror::Error;
 
+use crate::ports::order_repository::VerifiedPayment;
 use crate::ports::payment_gateway::{
     CheckoutRequest, CheckoutSession, PaymentError, PaymentGateway,
 };
@@ -15,6 +16,25 @@ pub struct StripeEvent {
     pub id: String,
     pub event_type: String,
     pub order_id: Option<uuid::Uuid>,
+    pub payment_status: Option<String>,
+    pub amount_total_cents: Option<i64>,
+    pub currency: Option<String>,
+}
+
+impl StripeEvent {
+    pub fn verified_payment(&self) -> Option<VerifiedPayment> {
+        if self.event_type != "checkout.session.completed"
+            || self.payment_status.as_deref() != Some("paid")
+        {
+            return None;
+        }
+        Some(VerifiedPayment {
+            event_id: self.id.clone(),
+            order_id: self.order_id?,
+            amount_total_cents: self.amount_total_cents?,
+            currency: self.currency.clone()?,
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
@@ -47,6 +67,9 @@ struct StripeEventData {
 struct StripeEventObject {
     #[serde(default)]
     metadata: StripeMetadata,
+    payment_status: Option<String>,
+    amount_total: Option<i64>,
+    currency: Option<String>,
 }
 
 #[derive(Default, Deserialize)]
@@ -86,10 +109,14 @@ pub fn verify_webhook(
 
     let raw: RawStripeEvent =
         serde_json::from_slice(payload).map_err(|_| WebhookError::InvalidPayload)?;
+    let object = raw.data.map(|data| data.object);
     Ok(StripeEvent {
         id: raw.id,
         event_type: raw.event_type,
-        order_id: raw.data.and_then(|data| data.object.metadata.order_id),
+        order_id: object.as_ref().and_then(|item| item.metadata.order_id),
+        payment_status: object.as_ref().and_then(|item| item.payment_status.clone()),
+        amount_total_cents: object.as_ref().and_then(|item| item.amount_total),
+        currency: object.and_then(|item| item.currency),
     })
 }
 
@@ -170,7 +197,7 @@ impl PaymentGateway for StripePaymentGateway {
             .await
             .map_err(|_| PaymentError::Unavailable)?;
         Ok(CheckoutSession {
-            payment_intent_id: response.id,
+            checkout_session_id: response.id,
             checkout_url: response.url,
         })
     }

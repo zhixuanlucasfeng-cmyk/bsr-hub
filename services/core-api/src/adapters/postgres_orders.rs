@@ -10,8 +10,9 @@ use crate::{
         quote::{FulfillmentMethod, PricingSnapshot},
     },
     ports::order_repository::{
-        CreateOrder, OrderRepository, ReserveError, ReservedOrder, SavePricingProfile,
-        StoredPricingProfile,
+        CreateOrder, OrderRepository, PaymentEventOutcome, PaymentValidation, ReserveError,
+        ReservedOrder, SavePricingProfile, StoredOrderPayment, StoredPricingProfile,
+        VerifiedPayment, validate_payment,
     },
 };
 
@@ -249,13 +250,12 @@ impl OrderRepository for PostgresOrderRepository {
 
     async fn apply_payment_event(
         &self,
-        event_id: &str,
-        order_id: Option<Uuid>,
-    ) -> Result<bool, ReserveError> {
+        payment: VerifiedPayment,
+    ) -> Result<PaymentEventOutcome, ReserveError> {
         let mut transaction = self.pool.begin().await.map_err(Self::map_sql)?;
         let inserted =
             sqlx::query("INSERT INTO stripe_events (event_id) VALUES ($1) ON CONFLICT DO NOTHING")
-                .bind(event_id)
+                .bind(&payment.event_id)
                 .execute(&mut *transaction)
                 .await
                 .map_err(Self::map_sql)?
@@ -263,27 +263,74 @@ impl OrderRepository for PostgresOrderRepository {
                 == 1;
         if !inserted {
             transaction.commit().await.map_err(Self::map_sql)?;
-            return Ok(false);
+            return Ok(PaymentEventOutcome::Duplicate);
         }
-        if let Some(order_id) = order_id {
+
+        let row = sqlx::query(
+            "SELECT o.status, o.reservation_expires_at, a.total_cents, a.currency \
+             FROM orders o JOIN order_amounts a ON a.order_id = o.id \
+             WHERE o.id = $1 FOR UPDATE OF o",
+        )
+        .bind(payment.order_id)
+        .fetch_optional(&mut *transaction)
+        .await
+        .map_err(Self::map_sql)?;
+        let Some(row) = row else {
+            transaction.commit().await.map_err(Self::map_sql)?;
+            return Ok(PaymentEventOutcome::MissingOrder);
+        };
+        let stored = StoredOrderPayment {
+            status: row.get("status"),
+            reservation_expires_at: row.get("reservation_expires_at"),
+            total_cents: row.get("total_cents"),
+            currency: row.get("currency"),
+        };
+        let validation = validate_payment(&payment, &stored, OffsetDateTime::now_utc());
+        if validation == PaymentValidation::Accepted {
             sqlx::query(
                 "UPDATE orders SET status = 'paid', updated_at = now() \
                  WHERE id = $1 AND status = 'pending_payment'",
             )
-            .bind(order_id)
+            .bind(payment.order_id)
             .execute(&mut *transaction)
             .await
             .map_err(Self::map_sql)?;
             sqlx::query(
                 "INSERT INTO order_events (order_id, event_type) VALUES ($1, 'payment_succeeded')",
             )
-            .bind(order_id)
+            .bind(payment.order_id)
+            .execute(&mut *transaction)
+            .await
+            .map_err(Self::map_sql)?;
+            transaction.commit().await.map_err(Self::map_sql)?;
+            return Ok(PaymentEventOutcome::Applied);
+        }
+
+        if validation == PaymentValidation::Expired {
+            sqlx::query(
+                "UPDATE orders SET status = 'expired', updated_at = now() \
+                 WHERE id = $1 AND status = 'pending_payment'",
+            )
+            .bind(payment.order_id)
             .execute(&mut *transaction)
             .await
             .map_err(Self::map_sql)?;
         }
+        let event_type = match validation {
+            PaymentValidation::Accepted => unreachable!(),
+            PaymentValidation::WrongState => "payment_rejected_wrong_state",
+            PaymentValidation::Expired => "payment_rejected_expired",
+            PaymentValidation::AmountMismatch => "payment_rejected_amount_mismatch",
+            PaymentValidation::CurrencyMismatch => "payment_rejected_currency_mismatch",
+        };
+        sqlx::query("INSERT INTO order_events (order_id, event_type) VALUES ($1, $2)")
+            .bind(payment.order_id)
+            .bind(event_type)
+            .execute(&mut *transaction)
+            .await
+            .map_err(Self::map_sql)?;
         transaction.commit().await.map_err(Self::map_sql)?;
-        Ok(true)
+        Ok(PaymentEventOutcome::Rejected(validation))
     }
 
     async fn transition(

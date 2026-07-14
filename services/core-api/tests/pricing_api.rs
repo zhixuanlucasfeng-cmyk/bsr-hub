@@ -154,3 +154,67 @@ async fn pricing_requires_authentication() {
     let response = app().oneshot(request).await.unwrap();
     assert_eq!(response.status(), 401);
 }
+
+#[tokio::test]
+async fn seller_adjustment_cannot_exceed_five_dollars() {
+    let request = Request::builder()
+        .method("PUT")
+        .uri("/v1/listings/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/pricing")
+        .header("content-type", "application/json")
+        .header("authorization", "Bearer owner-token")
+        .body(Body::from(
+            r#"{
+                "attributes": {
+                    "category": "ps5",
+                    "model": "slim",
+                    "ageMonths": 12,
+                    "condition": "good",
+                    "cleanliness": 3,
+                    "fullyOperational": true,
+                    "missingNonessentialFeatures": 0,
+                    "controllerCount": 1,
+                    "billingUnit": "day"
+                },
+                "sellerAdjustmentCents": 501,
+                "allowedFulfillmentMethods": ["pickup"]
+            }"#,
+        ))
+        .unwrap();
+    let response = app().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), 422);
+    assert_eq!(
+        json(response).await["error"]["code"],
+        "SELLER_ADJUSTMENT_OUT_OF_RANGE"
+    );
+}
+
+#[tokio::test]
+async fn immovable_workspace_rejects_delivery() {
+    let request = Request::builder()
+        .method("PUT")
+        .uri("/v1/listings/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/pricing")
+        .header("content-type", "application/json")
+        .header("authorization", "Bearer owner-token")
+        .body(Body::from(
+            r#"{
+                "attributes": {
+                    "category": "workspace",
+                    "squareFeet": 500,
+                    "locationTier": "suburban",
+                    "cleanliness": 3,
+                    "equipmentScore": 0,
+                    "amenityCount": 0,
+                    "billingUnit": "thirty_minutes"
+                },
+                "sellerAdjustmentCents": 0,
+                "allowedFulfillmentMethods": ["delivery"]
+            }"#,
+        ))
+        .unwrap();
+    let response = app().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), 422);
+    assert_eq!(
+        json(response).await["error"]["code"],
+        "FULFILLMENT_NOT_ALLOWED"
+    );
+}

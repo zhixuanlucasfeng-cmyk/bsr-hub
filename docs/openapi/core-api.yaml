@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: BSR Hub Core API
-  version: 0.1.0
+  version: 0.2.0
 servers:
   - url: http://localhost:8080
 paths:
@@ -23,10 +23,42 @@ paths:
       responses:
         "200":
           description: Authoritative USD quote
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuoteBreakdown" }
+        "422": { description: Invalid rental window or fulfillment method }
+  /v1/listings/{id}/pricing:
+    put:
+      operationId: saveListingPricing
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SavePricingRequest" }
+      responses:
+        "200":
+          description: Server-calculated pricing profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PricingProfile" }
+        "401": { description: Authentication required }
+        "403": { description: Listing is owned by another user }
+        "422": { description: Invalid attributes, fulfillment, or adjustment }
   /v1/orders:
     post:
       operationId: createOrder
       security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/QuoteRequest" }
       responses:
         "201":
           description: Reservation and Stripe test checkout created
@@ -58,8 +90,86 @@ components:
   schemas:
     QuoteRequest:
       type: object
-      required: [listingId, units, wantsDelivery]
+      additionalProperties: false
+      required: [listingId, startAt, endAt, fulfillment]
       properties:
         listingId: { type: string, format: uuid }
-        units: { type: integer, minimum: 1 }
-        wantsDelivery: { type: boolean }
+        startAt: { type: string, format: date-time }
+        endAt: { type: string, format: date-time }
+        fulfillment: { $ref: "#/components/schemas/FulfillmentMethod" }
+    BillingUnit:
+      type: string
+      enum: [thirty_minutes, day]
+    FulfillmentMethod:
+      type: string
+      enum: [pickup, delivery, owner_location, on_site]
+    Ps5PricingAttributes:
+      type: object
+      additionalProperties: false
+      required: [category, model, ageMonths, condition, cleanliness, fullyOperational, missingNonessentialFeatures, controllerCount, billingUnit]
+      properties:
+        category: { const: ps5 }
+        model: { type: string, enum: [original, slim, pro] }
+        ageMonths: { type: integer, minimum: 0, maximum: 120 }
+        condition: { type: string, enum: [like_new, good, fair, worn] }
+        cleanliness: { type: integer, minimum: 1, maximum: 5 }
+        fullyOperational: { type: boolean }
+        missingNonessentialFeatures: { type: integer, minimum: 0, maximum: 3 }
+        controllerCount: { type: integer, minimum: 1, maximum: 4 }
+        billingUnit: { $ref: "#/components/schemas/BillingUnit" }
+    WorkspacePricingAttributes:
+      type: object
+      additionalProperties: false
+      required: [category, squareFeet, locationTier, cleanliness, equipmentScore, amenityCount, billingUnit]
+      properties:
+        category: { const: workspace }
+        squareFeet: { type: integer, minimum: 50, maximum: 20000 }
+        locationTier: { type: string, enum: [residential, suburban, urban, premium] }
+        cleanliness: { type: integer, minimum: 1, maximum: 5 }
+        equipmentScore: { type: integer, minimum: 0, maximum: 5 }
+        amenityCount: { type: integer, minimum: 0, maximum: 10 }
+        billingUnit: { $ref: "#/components/schemas/BillingUnit" }
+    SavePricingRequest:
+      type: object
+      additionalProperties: false
+      required: [attributes, sellerAdjustmentCents, allowedFulfillmentMethods]
+      properties:
+        attributes:
+          oneOf:
+            - { $ref: "#/components/schemas/Ps5PricingAttributes" }
+            - { $ref: "#/components/schemas/WorkspacePricingAttributes" }
+        sellerAdjustmentCents: { type: integer, minimum: -500, maximum: 500 }
+        allowedFulfillmentMethods:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/FulfillmentMethod" }
+    PricingProfile:
+      type: object
+      required: [listingId, recommendedUnitPriceCents, sellerAdjustmentCents, finalUnitPriceCents, minimumAllowedCents, maximumAllowedCents, billingUnit, rulesetVersion, reasonCodes, allowedFulfillmentMethods]
+      properties:
+        listingId: { type: string, format: uuid }
+        recommendedUnitPriceCents: { type: integer }
+        sellerAdjustmentCents: { type: integer }
+        finalUnitPriceCents: { type: integer }
+        minimumAllowedCents: { type: integer }
+        maximumAllowedCents: { type: integer }
+        billingUnit: { $ref: "#/components/schemas/BillingUnit" }
+        rulesetVersion: { type: string, example: rules-v1 }
+        reasonCodes: { type: array, items: { type: string } }
+        allowedFulfillmentMethods:
+          type: array
+          items: { $ref: "#/components/schemas/FulfillmentMethod" }
+    QuoteBreakdown:
+      type: object
+      required: [unitPriceCents, billableUnits, billingUnit, baseCents, serviceFeeCents, deliveryFeeCents, depositCents, totalCents, currency]
+      properties:
+        unitPriceCents: { type: integer, minimum: 0 }
+        billableUnits: { type: integer, minimum: 1 }
+        billingUnit: { $ref: "#/components/schemas/BillingUnit" }
+        baseCents: { type: integer, minimum: 0 }
+        serviceFeeCents: { type: integer, minimum: 0 }
+        deliveryFeeCents: { type: integer, minimum: 0 }
+        depositCents: { type: integer, minimum: 0 }
+        totalCents: { type: integer, minimum: 0 }
+        currency: { const: USD }

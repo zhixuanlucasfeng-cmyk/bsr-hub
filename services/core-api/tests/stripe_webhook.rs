@@ -28,12 +28,28 @@ fn old_or_bad_signatures_are_rejected() {
 }
 
 #[test]
-fn payment_event_extracts_only_order_id_metadata() {
-    let payload = br#"{"id":"evt_order","type":"checkout.session.completed","data":{"object":{"metadata":{"order_id":"cccccccc-cccc-cccc-cccc-cccccccccccc"}}}}"#;
+fn paid_checkout_extracts_verified_payment_fields() {
+    let payload = br#"{"id":"evt_order","type":"checkout.session.completed","data":{"object":{"payment_status":"paid","amount_total":16800,"currency":"usd","metadata":{"order_id":"cccccccc-cccc-cccc-cccc-cccccccccccc"}}}}"#;
     let header = test_signature_header(1_700_000_000, payload, b"whsec_test");
     let event = verify_webhook(payload, &header, b"whsec_test", 1_700_000_100).unwrap();
+    let payment = event.verified_payment().unwrap();
     assert_eq!(
-        event.order_id.unwrap().to_string(),
+        payment.order_id.to_string(),
         "cccccccc-cccc-cccc-cccc-cccccccccccc"
     );
+    assert_eq!(payment.event_id, "evt_order");
+    assert_eq!(payment.amount_total_cents, 16_800);
+    assert_eq!(payment.currency, "usd");
+}
+
+#[test]
+fn unrelated_or_unpaid_checkout_is_not_actionable() {
+    for payload in [
+        br#"{"id":"evt_other","type":"customer.created"}"#.as_slice(),
+        br#"{"id":"evt_unpaid","type":"checkout.session.completed","data":{"object":{"payment_status":"unpaid","amount_total":16800,"currency":"usd","metadata":{"order_id":"cccccccc-cccc-cccc-cccc-cccccccccccc"}}}}"#.as_slice(),
+    ] {
+        let header = test_signature_header(1_700_000_000, payload, b"whsec_test");
+        let event = verify_webhook(payload, &header, b"whsec_test", 1_700_000_100).unwrap();
+        assert!(event.verified_payment().is_none());
+    }
 }

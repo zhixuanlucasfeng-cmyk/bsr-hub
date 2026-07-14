@@ -11,7 +11,7 @@ pub struct CheckoutRequest {
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CheckoutSession {
-    pub payment_intent_id: String,
+    pub checkout_session_id: String,
     pub checkout_url: String,
 }
 

@@ -63,7 +63,7 @@ impl PaymentGateway for FakePayments {
         request: CheckoutRequest,
     ) -> Result<CheckoutSession, PaymentError> {
         Ok(CheckoutSession {
-            payment_intent_id: format!("pi_test_{}", request.order_id),
+            checkout_session_id: format!("cs_test_{}", request.order_id),
             checkout_url: "https://checkout.stripe.test/session".into(),
         })
     }
