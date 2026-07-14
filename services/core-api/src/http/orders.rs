@@ -8,10 +8,7 @@ use uuid::Uuid;
 
 use crate::{
     AppState,
-    domain::{
-        order_state::{OrderAction, OrderState},
-        quote::{FulfillmentMethod, QuoteInput, calculate_quote},
-    },
+    domain::order_state::{OrderAction, OrderState},
     error::ApiError,
     ports::{
         order_repository::CreateOrder,
@@ -19,17 +16,7 @@ use crate::{
     },
 };
 
-use super::quotes::{map_quote_error, map_repository_error};
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CreateOrderRequest {
-    listing_id: Uuid,
-    units: i64,
-    wants_delivery: bool,
-    start_at: Option<String>,
-    end_at: Option<String>,
-}
+use super::quotes::{QuoteRequest, map_repository_error, prepare_quote};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -43,7 +30,7 @@ pub struct CreateOrderResponse {
 pub async fn create(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Json(request): Json<CreateOrderRequest>,
+    Json(request): Json<QuoteRequest>,
 ) -> Result<(StatusCode, Json<CreateOrderResponse>), ApiError> {
     let token = headers
         .get(axum::http::header::AUTHORIZATION)
@@ -56,31 +43,16 @@ pub async fn create(
         .verify(token)
         .await
         .map_err(|_| ApiError::auth_required())?;
-    let (start_at, end_at) = parse_rental_window(request.start_at, request.end_at)?;
-    let pricing = state
-        .orders
-        .pricing(request.listing_id)
-        .await
-        .map_err(map_repository_error)?;
-    let quote = calculate_quote(
-        pricing,
-        QuoteInput {
-            units: request.units,
-            fulfillment: if request.wants_delivery {
-                FulfillmentMethod::Delivery
-            } else {
-                FulfillmentMethod::Pickup
-            },
-        },
-    )
-    .map_err(map_quote_error)?;
+    let listing_id = request.listing_id;
+    let prepared = prepare_quote(&state, request).await?;
+    let quote = prepared.quote;
     let reserved = state
         .orders
         .reserve(CreateOrder {
-            listing_id: request.listing_id,
+            listing_id,
             buyer_id: user.user_id,
-            start_at,
-            end_at,
+            start_at: Some(prepared.start_at),
+            end_at: Some(prepared.end_at),
             quote: quote.clone(),
         })
         .await
@@ -102,35 +74,6 @@ pub async fn create(
             checkout_url: checkout.checkout_url,
         }),
     ))
-}
-
-fn parse_rental_window(
-    start_at: Option<String>,
-    end_at: Option<String>,
-) -> Result<(Option<time::OffsetDateTime>, Option<time::OffsetDateTime>), ApiError> {
-    match (start_at, end_at) {
-        (None, None) => Ok((None, None)),
-        (Some(start), Some(end)) => {
-            let format = &time::format_description::well_known::Rfc3339;
-            let start =
-                time::OffsetDateTime::parse(&start, format).map_err(|_| invalid_rental_window())?;
-            let end =
-                time::OffsetDateTime::parse(&end, format).map_err(|_| invalid_rental_window())?;
-            if start >= end {
-                return Err(invalid_rental_window());
-            }
-            Ok((Some(start), Some(end)))
-        }
-        _ => Err(invalid_rental_window()),
-    }
-}
-
-fn invalid_rental_window() -> ApiError {
-    ApiError::new(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        "INVALID_RENTAL_WINDOW",
-        "Provide both startAt and endAt as valid timestamps",
-    )
 }
 
 fn map_payment_error(_error: PaymentError) -> ApiError {

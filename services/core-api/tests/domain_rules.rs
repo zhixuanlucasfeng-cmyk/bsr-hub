@@ -13,6 +13,7 @@ fn rental_quote_uses_integer_cents_and_six_percent_fee() {
             delivery_fee_cents: 1_500,
             service_fee_bps: 600,
             billing_unit: BillingUnit::Day,
+            allowed_fulfillment_methods: vec![FulfillmentMethod::Delivery],
         },
         QuoteInput {
             units: 2,
@@ -39,6 +40,7 @@ fn invalid_quote_inputs_are_rejected() {
             delivery_fee_cents: 0,
             service_fee_bps: 600,
             billing_unit: BillingUnit::ThirtyMinutes,
+            allowed_fulfillment_methods: vec![FulfillmentMethod::Pickup],
         },
         QuoteInput {
             units: 0,
@@ -54,6 +56,7 @@ fn invalid_quote_inputs_are_rejected() {
             delivery_fee_cents: 0,
             service_fee_bps: 600,
             billing_unit: BillingUnit::ThirtyMinutes,
+            allowed_fulfillment_methods: vec![FulfillmentMethod::Pickup],
         },
         QuoteInput {
             units: 1,

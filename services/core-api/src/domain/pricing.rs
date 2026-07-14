@@ -11,6 +11,27 @@ pub enum BillingUnit {
     Day,
 }
 
+impl BillingUnit {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::ThirtyMinutes => "thirty_minutes",
+            Self::Day => "day",
+        }
+    }
+}
+
+impl TryFrom<&str> for BillingUnit {
+    type Error = PricingError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "thirty_minutes" => Ok(Self::ThirtyMinutes),
+            "day" => Ok(Self::Day),
+            _ => Err(PricingError::InvalidAttributes),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Ps5Model {

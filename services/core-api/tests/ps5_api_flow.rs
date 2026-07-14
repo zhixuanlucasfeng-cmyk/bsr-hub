@@ -7,7 +7,7 @@ use core_api::{
     auth::{AuthError, AuthUser, AuthVerifier},
     domain::{
         pricing::BillingUnit,
-        quote::{PricingSnapshot, QuoteBreakdown},
+        quote::{FulfillmentMethod, PricingSnapshot, QuoteBreakdown},
     },
     ports::{
         order_repository::{CreateOrder, OrderRepository, ReserveError, ReservedOrder},
@@ -31,7 +31,11 @@ impl OrderRepository for FakeOrders {
             deposit_cents: 10_000,
             delivery_fee_cents: 1_500,
             service_fee_bps: 600,
-            billing_unit: BillingUnit::Day,
+            billing_unit: BillingUnit::ThirtyMinutes,
+            allowed_fulfillment_methods: vec![
+                FulfillmentMethod::Pickup,
+                FulfillmentMethod::Delivery,
+            ],
         })
     }
 
@@ -101,7 +105,7 @@ async fn ps5_quote_and_reservation_flow_is_authoritative() {
         .uri("/v1/quotes")
         .header("content-type", "application/json")
         .body(Body::from(format!(
-            r#"{{"listingId":"{listing}","units":2,"wantsDelivery":true}}"#
+            r#"{{"listingId":"{listing}","startAt":"2026-07-20T10:00:00Z","endAt":"2026-07-20T10:31:00Z","fulfillment":"delivery"}}"#
         )))
         .unwrap();
     let quote_response = app().oneshot(quote_request).await.unwrap();
@@ -110,6 +114,7 @@ async fn ps5_quote_and_reservation_flow_is_authoritative() {
     assert_eq!(quote.total_cents, 16_800);
     assert_eq!(quote.service_fee_cents, 300);
     assert_eq!(quote.currency, "USD");
+    assert_eq!(quote.billable_units, 2);
 
     let create_order = || {
         Request::builder()
@@ -118,7 +123,7 @@ async fn ps5_quote_and_reservation_flow_is_authoritative() {
             .header("content-type", "application/json")
             .header("authorization", "Bearer good-token")
             .body(Body::from(format!(
-                r#"{{"listingId":"{listing}","units":2,"wantsDelivery":true,"startAt":"2026-07-20T10:00:00Z","endAt":"2026-07-22T10:00:00Z"}}"#
+                r#"{{"listingId":"{listing}","startAt":"2026-07-20T10:00:00Z","endAt":"2026-07-20T10:31:00Z","fulfillment":"delivery"}}"#
             )))
             .unwrap()
     };
@@ -144,7 +149,7 @@ async fn order_creation_requires_authentication() {
         .uri("/v1/orders")
         .header("content-type", "application/json")
         .body(Body::from(
-            r#"{"listingId":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","units":1,"wantsDelivery":false}"#,
+            r#"{"listingId":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","startAt":"2026-07-20T10:00:00Z","endAt":"2026-07-20T10:20:00Z","fulfillment":"pickup"}"#,
         ))
         .unwrap();
     let response = app().oneshot(request).await.unwrap();
@@ -173,7 +178,7 @@ async fn partial_rental_window_is_rejected() {
         .header("content-type", "application/json")
         .header("authorization", "Bearer good-token")
         .body(Body::from(
-            r#"{"listingId":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","units":1,"wantsDelivery":false,"startAt":"2026-07-20T10:00:00Z"}"#,
+            r#"{"listingId":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","startAt":"2026-07-20T10:00:00Z","fulfillment":"pickup"}"#,
         ))
         .unwrap();
     let response = app().oneshot(request).await.unwrap();
@@ -182,4 +187,18 @@ async fn partial_rental_window_is_rejected() {
         json(response).await["error"]["code"],
         "INVALID_RENTAL_WINDOW"
     );
+}
+
+#[tokio::test]
+async fn client_controlled_units_are_rejected() {
+    let request = Request::builder()
+        .method("POST")
+        .uri("/v1/quotes")
+        .header("content-type", "application/json")
+        .body(Body::from(
+            r#"{"listingId":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","startAt":"2026-07-20T10:00:00Z","endAt":"2026-07-20T10:20:00Z","fulfillment":"pickup","units":1}"#,
+        ))
+        .unwrap();
+    let response = app().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), 422);
 }

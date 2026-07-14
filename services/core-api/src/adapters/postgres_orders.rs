@@ -6,10 +6,13 @@ use uuid::Uuid;
 use crate::{
     domain::{
         order_state::{OrderAction, OrderState},
-        pricing::BillingUnit,
-        quote::PricingSnapshot,
+        pricing::{BillingUnit, PricingCategoryInput},
+        quote::{FulfillmentMethod, PricingSnapshot},
     },
-    ports::order_repository::{CreateOrder, OrderRepository, ReserveError, ReservedOrder},
+    ports::order_repository::{
+        CreateOrder, OrderRepository, ReserveError, ReservedOrder, SavePricingProfile,
+        StoredPricingProfile,
+    },
 };
 
 #[derive(Debug, Clone)]
@@ -50,20 +53,34 @@ impl PostgresOrderRepository {
 impl OrderRepository for PostgresOrderRepository {
     async fn pricing(&self, listing_id: Uuid) -> Result<PricingSnapshot, ReserveError> {
         let row = sqlx::query(
-            "SELECT unit_price_cents, deposit_cents, delivery_fee_cents \
-             FROM listings WHERE id = $1 AND status = 'active'",
+            "SELECT p.final_unit_price_cents AS unit_price_cents, p.billing_unit, \
+                    p.allowed_fulfillment_methods, l.deposit_cents, l.delivery_fee_cents \
+             FROM listings l \
+             JOIN listing_pricing_profiles p ON p.listing_id = l.id \
+             WHERE l.id = $1 AND l.status = 'active'",
         )
         .bind(listing_id)
         .fetch_optional(&self.pool)
         .await
         .map_err(Self::map_sql)?
-        .ok_or(ReserveError::NotFound)?;
+        .ok_or(ReserveError::PricingNotFound)?;
+        let billing_unit = BillingUnit::try_from(row.get::<&str, _>("billing_unit"))
+            .map_err(|_| ReserveError::InvalidPricing)?;
+        let methods: Vec<String> = row.get("allowed_fulfillment_methods");
+        let allowed_fulfillment_methods = methods
+            .iter()
+            .map(|method| {
+                FulfillmentMethod::try_from(method.as_str())
+                    .map_err(|_| ReserveError::InvalidPricing)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
         Ok(PricingSnapshot {
             unit_price_cents: row.get("unit_price_cents"),
             deposit_cents: row.get("deposit_cents"),
             delivery_fee_cents: row.get("delivery_fee_cents"),
             service_fee_bps: self.service_fee_bps,
-            billing_unit: BillingUnit::Day,
+            billing_unit,
+            allowed_fulfillment_methods,
         })
     }
 
@@ -156,6 +173,77 @@ impl OrderRepository for PostgresOrderRepository {
         Ok(ReservedOrder {
             order_id,
             expires_at,
+        })
+    }
+
+    async fn save_pricing_profile(
+        &self,
+        profile: SavePricingProfile,
+    ) -> Result<StoredPricingProfile, ReserveError> {
+        let mut transaction = self.pool.begin().await.map_err(Self::map_sql)?;
+        let owner_id: Option<Uuid> = sqlx::query_scalar(
+            "SELECT owner_id FROM listings WHERE id = $1 AND status = 'active' FOR UPDATE",
+        )
+        .bind(profile.listing_id)
+        .fetch_optional(&mut *transaction)
+        .await
+        .map_err(Self::map_sql)?;
+        let owner_id = owner_id.ok_or(ReserveError::NotFound)?;
+        if owner_id != profile.owner_id {
+            return Err(ReserveError::Forbidden);
+        }
+
+        let category = match &profile.attributes {
+            PricingCategoryInput::Ps5(_) => "ps5",
+            PricingCategoryInput::Workspace(_) => "workspace",
+        };
+        let attributes =
+            serde_json::to_value(&profile.attributes).map_err(|_| ReserveError::InvalidPricing)?;
+        let allowed_fulfillment_methods: Vec<&str> = profile
+            .allowed_fulfillment_methods
+            .iter()
+            .map(|method| method.as_str())
+            .collect();
+        sqlx::query(
+            "INSERT INTO listing_pricing_profiles (\
+               listing_id, category, billing_unit, attributes, ruleset_version, \
+               recommended_unit_price_cents, seller_adjustment_cents, \
+               allowed_fulfillment_methods, updated_at) \
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now()) \
+             ON CONFLICT (listing_id) DO UPDATE SET \
+               category = EXCLUDED.category, \
+               billing_unit = EXCLUDED.billing_unit, \
+               attributes = EXCLUDED.attributes, \
+               ruleset_version = EXCLUDED.ruleset_version, \
+               recommended_unit_price_cents = EXCLUDED.recommended_unit_price_cents, \
+               seller_adjustment_cents = EXCLUDED.seller_adjustment_cents, \
+               allowed_fulfillment_methods = EXCLUDED.allowed_fulfillment_methods, \
+               updated_at = now()",
+        )
+        .bind(profile.listing_id)
+        .bind(category)
+        .bind(profile.recommendation.billing_unit.as_str())
+        .bind(attributes)
+        .bind(&profile.recommendation.ruleset_version)
+        .bind(profile.recommendation.recommended_unit_price_cents)
+        .bind(profile.seller_adjustment_cents)
+        .bind(allowed_fulfillment_methods)
+        .execute(&mut *transaction)
+        .await
+        .map_err(Self::map_sql)?;
+        transaction.commit().await.map_err(Self::map_sql)?;
+
+        Ok(StoredPricingProfile {
+            listing_id: profile.listing_id,
+            recommended_unit_price_cents: profile.recommendation.recommended_unit_price_cents,
+            seller_adjustment_cents: profile.seller_adjustment_cents,
+            final_unit_price_cents: profile.final_unit_price_cents,
+            minimum_allowed_cents: profile.recommendation.minimum_allowed_cents,
+            maximum_allowed_cents: profile.recommendation.maximum_allowed_cents,
+            billing_unit: profile.recommendation.billing_unit,
+            ruleset_version: profile.recommendation.ruleset_version,
+            reason_codes: profile.recommendation.reason_codes,
+            allowed_fulfillment_methods: profile.allowed_fulfillment_methods,
         })
     }
 

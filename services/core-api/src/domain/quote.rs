@@ -3,7 +3,7 @@ use thiserror::Error;
 
 use super::pricing::BillingUnit;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum FulfillmentMethod {
     Pickup,
@@ -12,13 +12,39 @@ pub enum FulfillmentMethod {
     OnSite,
 }
 
-#[derive(Debug, Clone, Copy)]
+impl FulfillmentMethod {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Pickup => "pickup",
+            Self::Delivery => "delivery",
+            Self::OwnerLocation => "owner_location",
+            Self::OnSite => "on_site",
+        }
+    }
+}
+
+impl TryFrom<&str> for FulfillmentMethod {
+    type Error = QuoteError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "pickup" => Ok(Self::Pickup),
+            "delivery" => Ok(Self::Delivery),
+            "owner_location" => Ok(Self::OwnerLocation),
+            "on_site" => Ok(Self::OnSite),
+            _ => Err(QuoteError::InvalidFulfillment),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct PricingSnapshot {
     pub unit_price_cents: i64,
     pub deposit_cents: i64,
     pub delivery_fee_cents: i64,
     pub service_fee_bps: i64,
     pub billing_unit: BillingUnit,
+    pub allowed_fulfillment_methods: Vec<FulfillmentMethod>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize)]
@@ -50,6 +76,8 @@ pub enum QuoteError {
     NegativeAmount,
     #[error("quote arithmetic overflow")]
     Overflow,
+    #[error("fulfillment method is not allowed")]
+    InvalidFulfillment,
 }
 
 pub fn calculate_quote(
