@@ -31,6 +31,8 @@
 
 ## Anna — Communication and Frontend
 
+See [Anna's individual instructions](teammates/Anna-Individual-Task.md).
+
 ### Primary ownership
 
 - Build the design system, responsive navigation, and shared form components.
