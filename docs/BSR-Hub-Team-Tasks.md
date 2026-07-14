@@ -15,6 +15,8 @@
 
 ## Lucas — Coding and Project Coordination
 
+See [Lucas's individual instructions](teammates/Lucas-Individual-Task.md).
+
 ### Primary ownership
 
 - Set up the monorepo, linting, formatting, tests, and environment templates.
@@ -49,6 +51,8 @@ See [Anna's individual instructions](teammates/Anna-Individual-Task.md).
 - Mobile and accessibility review checklist.
 
 ## Yichen — Logic and Data
+
+See [Yichen's individual instructions](teammates/Yichen-Individual-Task.md).
 
 ### Primary ownership
 
@@ -85,6 +89,8 @@ See [Anna's individual instructions](teammates/Anna-Individual-Task.md).
 See [Lucian's individual instructions](teammates/Lucian-Individual-Task.md).
 
 ## Nasia — Presentation and Transaction UI
+
+See [Nasia's individual instructions](teammates/Nasia-Individual-Task.md).
 
 ### Primary ownership
 
