@@ -1,121 +1,63 @@
-# Yichen — Individual Task Instructions
+# Yicheng — Data, Logic, and Security
 
-## Your Role
+## Your Assignment
 
-You are responsible for **database design, permissions, booking logic, and logical test cases**. Your work ensures users cannot edit another person's data, two customers cannot rent the same item for overlapping dates, and orders follow valid state transitions.
+You own the missing Supabase schema, Row Level Security, database tests, booking logic evidence, and Rust logic review for BSR Hub.
 
-Because you do not have a VPN, use **Qoder CN（原通义灵码）** as your coding agent. Work on local SQL, migration, Rust test, and documentation files. Lucas will create and operate the shared Supabase cloud project.
+Read these files first:
 
-## Tool Setup
+1. `docs/superpowers/specs/2026-07-14-yichen-data-security-handoff-design.md`
+2. `docs/superpowers/plans/2026-07-14-yichen-data-security.md`
+3. `supabase/migrations/20260714000100_core_marketplace.sql`
 
-1. Install Qoder CN or its supported VS Code/JetBrains extension.
-2. Open only the official BSR Hub project folder.
-3. Ask Lucas for the current repository ZIP or Git access and the approved schema/API contracts.
-4. Never paste API keys, `.env` contents, passwords, private addresses, or Stripe secrets into the agent.
-5. Return source files and test output to Lucas through the agreed team channel.
+The existing core migration is already merged and must not be edited. Create new timestamped migrations only.
 
-## Main Responsibilities
+## Tool
 
-### 1. PostgreSQL migrations
+Because you do not have a VPN, use Qoder CN（原通义灵码）for local SQL, tests, and documentation. Never paste `.env`, API keys, database passwords, access tokens, private addresses, or Stripe secrets into any model.
 
-Create repeatable Supabase/PostgreSQL migrations for:
+## Required Work
 
-- profiles;
-- listings;
-- listing images;
-- availability;
-- orders;
-- order amounts;
-- payments;
-- reviews;
-- order events.
+- Add `listing_images` and `listing_availability`.
+- Add backend-protected `payments` and completed-order `reviews`.
+- Complete RLS for ownership, order participation, financial protection, and review eligibility.
+- Prove identical, partial, contained, adjacent, expired, cancelled, completed, active, and concurrent booking behavior.
+- Build the rental/sale/workspace state-transition matrix.
+- Review Lucas's Rust quote, reservation, state, and Stripe logic without rewriting it.
+- Return an organized `yicheng-handoff/` inventory with test evidence.
 
-Include primary keys, foreign keys, required fields, timestamps, indexes, and check constraints. Store money as integer U.S. cents.
-
-### 2. Row Level Security
-
-Write and test policies so that:
-
-- public users can read only active public listings and safe public profile fields;
-- authenticated users can edit only their own profile and listings;
-- buyers and sellers can read only orders in which they participate;
-- users cannot change authoritative order prices or payment status directly;
-- exact addresses are visible only to authorized order participants after confirmation;
-- reviews require a completed order involving the reviewer.
-
-### 3. Availability and conflict prevention
-
-Design the constraint and transaction rules that prevent overlapping bookings for the same rentable listing or workspace. Pending-payment reservations last 30 minutes. Expired reservations must no longer block future bookings.
-
-Prepare test cases for:
-
-- identical dates;
-- partially overlapping dates;
-- one booking fully inside another;
-- adjacent, non-overlapping dates;
-- expired pending payment;
-- completed, cancelled, and active orders;
-- two simultaneous booking requests.
-
-### 4. Order-state logic
-
-Document and test the allowed state transitions:
+## Files You Must Not Change
 
 ```text
-draft → pending_payment → paid → confirmed → active_or_fulfilled
-      → returned_if_rental → completed
-pending_payment → expired
+supabase/migrations/20260714000100_core_marketplace.sql
+services/core-api/**
+apps/web/**
+.env
+.env.local
+render.yaml
 ```
 
-Cancellation is permitted only from approved pre-completion states. Create a table showing every allowed and rejected transition for rental, sale, and workspace orders.
+If a Rust issue is discovered, record it in `docs/reviews/yichen-rust-review.md` and send it to Lucas.
 
-### 5. Rust logic review
-
-Review Lucas's Rust implementation for:
-
-- integer price calculations;
-- deposit rules;
-- delivery and service fees;
-- authoritative server-side totals;
-- transactional order creation;
-- booking overlap checks;
-- valid state transitions;
-- idempotent Stripe webhook handling.
-
-Report issues with a reproducible example and expected result. Do not rewrite Lucas's Rust files without coordinating first.
-
-## Ten-Day Schedule
-
-- **Day 1:** Finalize schema, constraints, state machine, and migration order.
-- **Day 2:** Implement profiles, listings, images, availability, and initial RLS.
-- **Day 3:** Implement orders, amounts, payments, reviews, events, and indexes.
-- **Day 4:** Implement overlap protection and booking test matrix.
-- **Day 5:** Review Rust quote/order logic and test Stripe-state assumptions.
-- **Day 6:** Integration only; fix database or contract issues blocking the PS5 rental.
-- **Day 7:** Finish review, delivery status, return, and review policies.
-- **Day 8:** Run security, cross-user, concurrency, and migration-rebuild tests.
-- **Day 9:** No new features; fix critical issues and prepare evidence.
-- **Day 10:** Support the final smoke test and answer data/security questions.
-
-## Required Deliverables
-
-- Ordered migration files under `supabase/migrations/`.
-- RLS policies and security tests.
-- Booking-overlap and concurrency test cases.
-- Order-state transition matrix.
-- Rust logic review notes.
-- A clean database rebuild procedure for Lucas.
-
-## Recommended Qoder CN Request
+## Qoder CN Prompt
 
 ```text
-Work only on Supabase/PostgreSQL migrations, database tests, and logic documentation.
-Do not change the Next.js frontend, Rust API implementation, or environment files.
-Implement the approved BSR Hub schema and RLS policies with explicit tests proving
-that cross-user writes and overlapping bookings are rejected. Store money as integer
-cents. Summarize every changed file and provide the exact local verification commands.
+Work inside the BSR Hub repository and follow
+docs/superpowers/plans/2026-07-14-yichen-data-security.md task by task.
+
+Only create new Supabase/PostgreSQL migrations, pgTAP tests, database logic
+documents, and the Yicheng handoff inventory. Do not modify the existing core
+migration, Rust API, Next.js frontend, environment files, or deployment files.
+
+Use red-green-refactor: write each pgTAP test, run it and confirm the expected
+failure, implement the minimum migration or policy, then rerun it. Store money
+as bigint integer cents. Prove that cross-user writes, browser payment writes,
+invalid reviews, and overlapping bookings are rejected. Show every changed file,
+exact verification command, output summary, and commit hash. Never include secrets.
 ```
 
-## Definition of Done
+## Delivery
 
-Yichen's work is complete when Lucas can rebuild the database from migrations, two simultaneous users cannot book the same period, one user cannot modify another user's protected records, and every valid or invalid order transition has a documented test.
+Send Lucas the `yicheng-handoff/` folder plus the Git branch or ZIP containing the repository-ready files. Lucas will run the clean rebuild and merge review.
+
+Your work is finished only when all database tests pass from a clean reset and the handoff contains no credentials or private user data.
