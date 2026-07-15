@@ -35,6 +35,13 @@ export function ShopAssistant({ onRent, onList, onWorkspace, onDelivery }: ShopA
     return ()=>{ if(timer.current)clearTimeout(timer.current); };
   },[]);
 
+  useEffect(()=>{
+    if(!open)return;
+    const closeOnEscape=(event:KeyboardEvent)=>{ if(event.key==="Escape")setOpen(false); };
+    document.addEventListener("keydown",closeOnEscape);
+    return ()=>document.removeEventListener("keydown",closeOnEscape);
+  },[open]);
+
   const markGreeted=()=>{ try{sessionStorage.setItem("bsr-assistant-greeted","true");}catch{} };
   const dismiss=()=>{ if(timer.current)clearTimeout(timer.current);markGreeted();setOpen(false); };
   const launch=()=>{ markGreeted();setOpen(true); };
