@@ -6,6 +6,7 @@ export interface Listing {
   category: string; description: string; city: string; state: string; condition: string;
   unitPriceCents: number; depositCents: number; deliveryFeeCents: number;
   billingUnit: "thirty_minutes" | "day"; fulfillment: Fulfillment[]; accent: string; icon: string;
+  imageSrc: string; imageAlt: string;
 }
 
 export interface Quote {
