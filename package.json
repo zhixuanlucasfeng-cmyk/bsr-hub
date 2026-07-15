@@ -19,6 +19,8 @@
     "runner:test": "npm run test -w @bsr-hub/runner",
     "runner:check": "npm run typecheck -w @bsr-hub/runner && npm run test -w @bsr-hub/runner && npm run build -w @bsr-hub/runner",
     "runner:demo": "bash scripts/runner-demo.sh",
+    "pages:build": "bash scripts/build-pages.sh",
+    "pages:check": "npm run check:web && npm run runner:check && npm run pages:build",
     "check:rust": "cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace",
     "check": "npm run check:rust && npm run check:web && npm run runner:check"
   },

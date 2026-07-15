@@ -8,10 +8,14 @@ import { PostTaskView, type TaskDraft } from "../components/PostTaskView";
 import { RunnerNav, type Screen } from "../components/RunnerNav";
 import { TaskMarketView, TaskTrackingView } from "../components/TaskMarketView";
 import type { AdminSummary, RunnerAction, RunnerApplication, RunnerEarnings, RunnerPersona, RunnerQuote, RunnerTask } from "../lib/contracts";
+import { createRunnerStaticDemo } from "../lib/static-demo";
 
 const API = process.env.NEXT_PUBLIC_RUNNER_API_URL ?? "http://127.0.0.1:8080";
+const STATIC_DEMO = process.env.NEXT_PUBLIC_STATIC_DEMO === "true";
+const staticDemo = createRunnerStaticDemo();
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  if (STATIC_DEMO) return staticDemo.request<T>(path, init);
   const response = await fetch(`${API}${path}`, {
     ...init,
     headers: { "Content-Type": "application/json", ...init?.headers },
@@ -64,7 +68,7 @@ export default function RunnerDemo() {
       await loadTasks();
       const query = persona === "runner" ? "?runner_id=runner-1" : "";
       setSelected(await request<RunnerTask>(`/v1/runner/demo/tasks/${selected.id}${query}`));
-      setNotice(action === "complete" ? "Task completed — protected demo payout released." : "Task state updated by the Rust rules engine.");
+      setNotice(action === "complete" ? "Task completed — protected demo payout released." : STATIC_DEMO ? "Task state updated by the public demo rules." : "Task state updated by the Rust rules engine.");
     } catch (error) { setNotice(error instanceof Error ? error.message : "Action failed"); }
     finally { setBusy(false); }
   };

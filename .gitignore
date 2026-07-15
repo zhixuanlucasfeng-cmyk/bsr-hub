@@ -6,5 +6,7 @@
 target/
 node_modules/
 .next/
+out/
+dist-pages/
 *.tsbuildinfo
 .DS_Store

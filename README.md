@@ -2,6 +2,14 @@
 
 BSR Hub is a U.S. peer-to-peer marketplace for buying, selling, renting products, and booking immovable workspaces. The Rust core API owns money, reservation, order-state, and payment rules.
 
+## Public team demos
+
+- [Choose BSR Hub or BSR Runner](https://zhixuanlucasfeng-cmyk.github.io/bsr-hub/)
+- [Open BSR Hub](https://zhixuanlucasfeng-cmyk.github.io/bsr-hub/hub/)
+- [Open BSR Runner](https://zhixuanlucasfeng-cmyk.github.io/bsr-hub/runner/)
+
+The public GitHub Pages versions use fictional in-browser demo data, so teammates can test the full journeys without installing Rust or running a server. The repository still contains the Rust/Axum implementation used for local development and verification. No real payment, address, identity, or employment data is collected.
+
 ## Run the complete classroom demo
 
 Requirements: Node.js 22+, npm, and stable Rust. No database, Stripe key, Supabase account, Docker, or real payment information is required.
@@ -22,6 +30,12 @@ npm run check
 ```
 
 This checks Rust formatting, Clippy, all Rust tests, web types, web unit tests, and the Next.js production build.
+
+To build the exact static artifact deployed to GitHub Pages:
+
+```bash
+npm run pages:check
+```
 
 ## Project map
 
