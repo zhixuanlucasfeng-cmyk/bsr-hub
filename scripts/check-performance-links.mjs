@@ -32,6 +32,14 @@ const css = await readFile("apps/web/src/app/globals.css", "utf8");
 if (css.includes("fonts.googleapis.com")) failures.push("Runtime Google Fonts import is still present");
 const featured = await readFile("apps/web/src/components/FeaturedListings.tsx", "utf8");
 if (!featured.includes("eager={index === 0}")) failures.push("Only the first listing should be eager");
+const footer = await readFile("apps/web/src/components/SiteFooter.tsx", "utf8");
+for (const marker of ["footerGroups", "href={link.href}", "FooterDestination", "footer-link-nav"]) {
+  if (!footer.includes(marker)) failures.push(`Footer is missing ${marker}`);
+}
+const help = await readFile("apps/web/src/app/help/page.tsx", "utf8").catch(() => "");
+for (const marker of ["protected-payment", "help-center", "terms", "privacy"]) {
+  if (!help.includes(marker)) failures.push(`Help page is missing ${marker}`);
+}
 
 if (failures.length) {
   console.error(failures.join("\n"));

@@ -33,6 +33,7 @@
 
 /* Refined marketplace chrome */
 .global-nav-links{height:auto;padding:0;background:transparent;border:0;position:static;inset:auto;z-index:auto}
+.footer-link-nav{height:auto;display:block;padding:0;background:transparent;border:0;position:static;inset:auto;z-index:auto}
 .support-launcher-icon{position:fixed;left:18px;bottom:22px;z-index:45;display:grid;place-items:center;width:48px;height:48px;border:0;border-radius:50%;background:#17131f;color:#fff;box-shadow:0 16px 45px #17131f4d;transition:transform .2s ease,box-shadow .2s ease,background .2s ease}
 .support-launcher-icon:hover{transform:translateY(-2px) scale(1.04);background:#7c3aed;box-shadow:0 20px 50px #7c3aed4a}
 .support-launcher-icon:focus-visible{outline:3px solid #ccff00;outline-offset:3px}
