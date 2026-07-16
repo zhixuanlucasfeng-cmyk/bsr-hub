@@ -9,6 +9,7 @@
     "postcss": "$postcss"
   },
   "scripts": {
+    "images:optimize": "node scripts/optimize-images.mjs",
     "dev": "npm run dev -w @bsr-hub/web",
     "demo": "bash scripts/demo.sh",
     "build": "npm run build -w @bsr-hub/web",
@@ -25,6 +26,7 @@
     "check": "npm run check:rust && npm run check:web && npm run runner:check"
   },
   "devDependencies": {
-    "postcss": "^8.5.10"
+    "postcss": "^8.5.10",
+    "sharp": "^0.35.3"
   }
 }
