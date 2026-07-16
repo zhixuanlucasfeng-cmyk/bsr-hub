@@ -20,7 +20,7 @@ export function LoginModal({ open, personas, onSelect, onGuest, onClose }: Login
       <button onClick={onClose} className="absolute right-5 top-5 grid size-9 place-items-center rounded-full bg-zinc-100 text-xl text-zinc-600 transition hover:bg-zinc-200" aria-label="Close sign in">×</button>
       <div className="mb-6 grid size-12 place-items-center rounded-2xl bg-accent text-zinc-950"><LinearIcon name="user" className="size-6"/></div>
       <p className="mb-2 text-xs font-extrabold uppercase tracking-[.18em] text-brand">Demo sign in</p>
-      <h2 id="login-title" className="font-[Manrope] text-3xl font-bold tracking-tight text-zinc-950">Welcome to BSR Hub</h2>
+      <h2 id="login-title" className="font-sans text-3xl font-bold tracking-tight text-zinc-950">Welcome to BSR Hub</h2>
       <p className="mt-3 text-sm leading-6 text-zinc-600">Choose a fictional identity to try protected orders and listing tools. No real credentials or identity documents are collected.</p>
       <div className="mt-7 space-y-3" aria-label="Demo identities">
         {personas.map((persona) => <button key={persona.id} onClick={() => onSelect(persona.id)} className="flex w-full items-center gap-4 rounded-2xl bg-zinc-50 p-4 text-left transition hover:-translate-y-0.5 hover:bg-violet-50 hover:shadow-md">

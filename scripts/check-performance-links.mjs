@@ -1,4 +1,4 @@
-import { readdir, stat } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
 
 const publicRoot = "apps/web/public/images";
@@ -27,6 +27,11 @@ for (const source of sources) {
     }
   }
 }
+
+const css = await readFile("apps/web/src/app/globals.css", "utf8");
+if (css.includes("fonts.googleapis.com")) failures.push("Runtime Google Fonts import is still present");
+const featured = await readFile("apps/web/src/components/FeaturedListings.tsx", "utf8");
+if (!featured.includes("eager={index === 0}")) failures.push("Only the first listing should be eager");
 
 if (failures.length) {
   console.error(failures.join("\n"));

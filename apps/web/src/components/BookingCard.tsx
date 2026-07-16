@@ -49,7 +49,7 @@ export function BookingCard({ listing, onProtectedAction }: BookingCardProps) {
 
   return <aside id="booking-card" className="rounded-[24px] bg-white p-6 shadow-soft lg:sticky lg:top-28">
     <p className="text-xs font-bold uppercase tracking-[.14em] text-brand">{listing.listingType === "sale" ? "One-time price" : listing.listingType === "workspace" ? "Space rate" : "Rental rate"}</p>
-    <p className="mt-2 font-[Manrope] text-3xl font-bold text-brand">{listingPriceLabel(listing)}</p>
+    <p className="mt-2 font-sans text-3xl font-bold text-brand">{listingPriceLabel(listing)}</p>
     <p className="mt-2 text-xs text-zinc-500">Transparent quote · 6% BSR service fee</p>
     <div className="mt-6 space-y-4">
       <label className="block text-xs font-bold text-zinc-800">Start date<input type="date" className="mt-2 w-full rounded-xl bg-zinc-50 px-4 py-3 font-normal text-zinc-700 outline-none ring-1 ring-zinc-100 focus:ring-2 focus:ring-brand"/></label>
