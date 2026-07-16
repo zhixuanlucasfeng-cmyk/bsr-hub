@@ -89,6 +89,8 @@ Key safeguards:
 
 See [the core API runbook](docs/runbooks/core-api.md) and [the demo checklist](docs/runbooks/demo-smoke-test.md).
 
+For the hosted Rust API and persistent Atlas database, use the [Render + MongoDB Atlas production runbook](docs/runbooks/render-mongodb-atlas.md). The checked-in Blueprint explicitly uses Render's free plan and never stores the MongoDB connection string in Git.
+
 ## BSR Runner: the local task marketplace
 
 BSR Runner is the team's second website. Customers post lawful nearby errands or BSR Hub delivery requests; independent adult runners choose work and see their automatic payout before accepting. Exact addresses stay private until assignment, simulated payment stays protected until completion, and Rust controls every task transition.

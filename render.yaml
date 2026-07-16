@@ -2,12 +2,16 @@ services:
   - type: web
     name: bsr-hub-core-api
     runtime: docker
+    plan: free
     dockerfilePath: ./services/core-api/Dockerfile
     dockerContext: .
-    healthCheckPath: /health
+    healthCheckPath: /ready
+    initialDeployHook: /usr/local/bin/mongo_bootstrap
     envVars:
-      - key: DATABASE_URL
+      - key: MONGODB_URI
         sync: false
+      - key: MONGODB_DATABASE
+        value: bsr_hub
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY
@@ -17,13 +21,12 @@ services:
       - key: STRIPE_WEBHOOK_SECRET
         sync: false
       - key: WEB_SUCCESS_URL
-        sync: false
+        value: https://zhixuanlucasfeng-cmyk.github.io/bsr-hub/hub/orders/?payment=success
       - key: WEB_CANCEL_URL
-        sync: false
+        value: https://zhixuanlucasfeng-cmyk.github.io/bsr-hub/hub/orders/?payment=cancelled
       - key: ALLOWED_ORIGIN
-        sync: false
+        value: https://zhixuanlucasfeng-cmyk.github.io
       - key: SERVICE_FEE_BPS
         value: "600"
       - key: RESERVATION_MINUTES
         value: "30"
-
