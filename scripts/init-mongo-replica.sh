@@ -14,7 +14,7 @@ done
 
 "${compose[@]}" exec -T mongodb mongosh --quiet \
   --username bsr --password bsr-local-only --authenticationDatabase admin \
-  --eval 'try { rs.status().ok } catch (_) { rs.initiate({_id:"rs0",members:[{_id:0,host:"mongodb:27017"}]}); }'
+  --eval 'try { rs.status().ok } catch (_) { rs.initiate({_id:"rs0",members:[{_id:0,host:"localhost:27017"}]}); }'
 
 for _ in $(seq 1 30); do
   if "${compose[@]}" exec -T mongodb mongosh --quiet \

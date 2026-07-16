@@ -44,6 +44,7 @@ pub async fn create(
         .await
         .map_err(|_| ApiError::auth_required())?;
     let listing_id = request.listing_id;
+    let fulfillment = request.fulfillment;
     let prepared = prepare_quote(&state, request).await?;
     let quote = prepared.quote;
     let reserved = state
@@ -53,6 +54,7 @@ pub async fn create(
             buyer_id: user.user_id,
             start_at: Some(prepared.start_at),
             end_at: Some(prepared.end_at),
+            fulfillment,
             quote: quote.clone(),
         })
         .await

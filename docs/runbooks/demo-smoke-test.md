@@ -2,6 +2,8 @@
 
 Use two test accounts and Stripe test mode.
 
+Before a persistent-backend demo, run `npm run mongo:check`. It proves the seed is idempotent and exercises actual replica-set transactions; a normal GitHub Pages classroom demo continues to use fictional in-browser data.
+
 1. Seller enters PS5 model, age, condition, cleanliness, operational status, missing features, controllers, and selects 30-minute billing. Confirm Rust returns a `rules-v1` recommended unit price and only permits a seller adjustment between -$5 and +$5.
 2. Buyer requests a 31-minute rental with delivery. Confirm the API calculates two billable 30-minute units itself and returns the unit price, base, 6% service fee, delivery, deposit, and total. Confirm adding a client-controlled `units` field returns `422`.
 3. Buyer creates an order and receives a 30-minute reservation plus a Stripe test checkout URL.

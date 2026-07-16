@@ -1,7 +1,14 @@
 services:
   mongodb:
     image: mongo:8.0
-    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--auth", "--keyFile", "/run/secrets/mongo-keyfile"]
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - >-
+        cp /run/secrets/mongo-keyfile-source /tmp/mongo-keyfile &&
+        chown mongodb:mongodb /tmp/mongo-keyfile &&
+        chmod 400 /tmp/mongo-keyfile &&
+        exec docker-entrypoint.sh mongod --replSet rs0 --bind_ip_all --auth
+        --keyFile /tmp/mongo-keyfile
     restart: unless-stopped
     ports:
       - "127.0.0.1:27017:27017"
@@ -12,8 +19,7 @@ services:
       - mongodb_data:/data/db
     secrets:
       - source: mongo_keyfile
-        target: mongo-keyfile
-        mode: 0400
+        target: mongo-keyfile-source
     healthcheck:
       test: ["CMD-SHELL", "mongosh --quiet --username bsr --password bsr-local-only --authenticationDatabase admin --eval 'db.adminCommand({ ping: 1 }).ok' | grep 1"]
       interval: 3s

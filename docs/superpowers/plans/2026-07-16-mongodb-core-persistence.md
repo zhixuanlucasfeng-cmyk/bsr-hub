@@ -41,7 +41,7 @@ This first implementation plan delivers the working database foundation and the 
 - Produces: `ReserveError::Database(String)` and `ReserveError::database(error)`.
 - Consumes: existing `SERVICE_FEE_BPS`, `RESERVATION_MINUTES`, Stripe test-mode, Supabase, and CORS configuration.
 
-- [ ] **Step 1: Write failing MongoDB configuration tests**
+- [x] **Step 1: Write failing MongoDB configuration tests**
 
 Add cases to `services/core-api/tests/config_rules.rs` proving `MONGODB_URI` and `MONGODB_DATABASE` are required and that the database name rejects an empty value or names containing `/`, `\\`, `.`, space, `"`, `$`, or a null byte.
 
@@ -67,13 +67,13 @@ fn mongodb_database_name_is_validated() {
 }
 ```
 
-- [ ] **Step 2: Run the focused tests and verify RED**
+- [x] **Step 2: Run the focused tests and verify RED**
 
 Run: `cargo test -p core-api --test config_rules`
 
 Expected: compilation or assertion failure because `Config` still reads `DATABASE_URL` and has no MongoDB fields.
 
-- [ ] **Step 3: Add the driver and configuration contract**
+- [x] **Step 3: Add the driver and configuration contract**
 
 In `services/core-api/Cargo.toml`, add the MongoDB dependencies while temporarily retaining SQLx until the PostgreSQL adapter is removed in Task 6:
 
@@ -150,13 +150,13 @@ WEB_CANCEL_URL=http://localhost:3000/?payment=cancelled
 ALLOWED_ORIGIN=http://localhost:3000
 ```
 
-- [ ] **Step 4: Run tests and quality checks**
+- [x] **Step 4: Run tests and quality checks**
 
 Run: `cargo test -p core-api --test config_rules && cargo fmt --check && cargo clippy -p core-api --all-targets -- -D warnings`
 
 Expected: configuration tests pass; format and Clippy exit 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add services/core-api/Cargo.toml services/core-api/src/config.rs services/core-api/src/ports/order_repository.rs services/core-api/src/adapters/postgres_orders.rs services/core-api/tests/config_rules.rs .env.mongodb.example Cargo.lock
@@ -183,7 +183,7 @@ git commit -m "feat: configure MongoDB persistence"
 - Produces: `slot_boundaries(start, end) -> Result<Vec<OffsetDateTime>, SlotError>`.
 - Produces persistence structs `ListingDocument`, `PricingProfileDocument`, `OrderDocument`, `BookingSlotDocument`, and `OrderEventDocument`.
 
-- [ ] **Step 1: Write slot-boundary tests**
+- [x] **Step 1: Write slot-boundary tests**
 
 Create `services/core-api/tests/mongo_slots.rs`:
 
@@ -216,13 +216,13 @@ fn unaligned_or_backwards_windows_are_rejected() {
 }
 ```
 
-- [ ] **Step 2: Run the test and verify RED**
+- [x] **Step 2: Run the test and verify RED**
 
 Run: `cargo test -p core-api --test mongo_slots`
 
 Expected: compilation failure because the MongoDB adapter and slot helper do not exist.
 
-- [ ] **Step 3: Implement slot generation and BSON documents**
+- [x] **Step 3: Implement slot generation and BSON documents**
 
 `slot_boundaries` must accept only UTC boundaries aligned to minute `00` or `30`, require `end > start`, cap a single reservation at 2,880 slots, and emit every half-hour start in `[start, end)`.
 
@@ -242,7 +242,7 @@ pub struct BookingSlotDocument {
 
 Store enum strings with explicit conversions from existing domain enums. Store the complete quote snapshot inside `OrderDocument`, including base, service fee, delivery fee, deposit, total, and currency.
 
-- [ ] **Step 4: Add Docker replica-set development commands**
+- [x] **Step 4: Add Docker replica-set development commands**
 
 `compose.mongodb.yml` runs MongoDB with `--replSet rs0 --bind_ip_all`, a named data volume, health check, and local-only credentials. `scripts/init-mongo-replica.sh` calls `rs.initiate()` idempotently and waits until the node becomes primary.
 
@@ -256,7 +256,7 @@ Add root scripts:
 }
 ```
 
-- [ ] **Step 5: Implement indexes and validators**
+- [x] **Step 5: Implement indexes and validators**
 
 `bootstrap()` creates collections when missing and applies idempotent indexes with stable names:
 
@@ -274,13 +274,13 @@ IndexModel::builder()
 
 Create `booking_slot_expiry` with `expire_after: Duration::ZERO` on `expires_at`, `pricing_listing_unique` on `pricing_profiles.listing_id`, and `provider_event_unique` as a unique partial index on provider event IDs. Apply `$jsonSchema` validators using `collMod` for required identifier, money, state, timestamp, and schema-version fields.
 
-- [ ] **Step 6: Run focused and static checks**
+- [x] **Step 6: Run focused and static checks**
 
 Run: `cargo test -p core-api --test mongo_slots && cargo fmt --check && cargo clippy -p core-api --all-targets -- -D warnings`
 
 Expected: slot tests pass; format and Clippy exit 0.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add compose.mongodb.yml scripts/init-mongo-replica.sh package.json services/core-api/src/adapters services/core-api/tests/mongo_slots.rs
@@ -304,7 +304,7 @@ git commit -m "feat: bootstrap MongoDB collections"
 - Produces: `seed_fictional_catalog(&Database) -> Result<SeedReport, MongoAdapterError>`.
 - Implements: `OrderRepository::pricing` and `OrderRepository::save_pricing_profile`.
 
-- [ ] **Step 1: Write ignored integration tests for pricing round trips**
+- [x] **Step 1: Write ignored integration tests for pricing round trips**
 
 The test reads `MONGODB_TEST_URI`; when absent it reports a clear skip through `#[ignore = "requires MONGODB_TEST_URI replica set"]`. When enabled, it creates a unique database name, bootstraps it, seeds one active listing, saves a PS5 pricing profile, reads it back through `pricing()`, and drops the test database.
 
@@ -319,13 +319,13 @@ assert!(snapshot
     .contains(&FulfillmentMethod::Pickup));
 ```
 
-- [ ] **Step 2: Run the integration test and verify RED**
+- [x] **Step 2: Run the integration test and verify RED**
 
 Run: `cargo test -p core-api --test mongo_pricing_integration -- --ignored --nocapture`
 
 Expected: compilation failure because `MongoOrderRepository` and seed functions are not implemented.
 
-- [ ] **Step 3: Implement connection, seed, and pricing methods**
+- [x] **Step 3: Implement connection, seed, and pricing methods**
 
 `connect()` parses `ClientOptions`, assigns app name `bsr-hub-core-api`, creates one shared `Client`, selects the configured database, and invokes bootstrap before returning.
 
@@ -335,7 +335,7 @@ The seed uses stable fictional UUIDs and `replace_one(...).upsert(true)` so repe
 
 `save_pricing_profile()` verifies active listing ownership, then upserts the profile. The Rust domain recommendation and ±500-cent seller limit remain authoritative; the adapter only persists the already-validated values.
 
-- [ ] **Step 4: Add bootstrap command**
+- [x] **Step 4: Add bootstrap command**
 
 `mongo_bootstrap` reads `Config`, connects, bootstraps, seeds, prints only collection counts, and never prints the URI. Add:
 
@@ -345,7 +345,7 @@ The seed uses stable fictional UUIDs and `replace_one(...).upsert(true)` so repe
 
 Document `npm run mongo:up`, copying `.env.mongodb.example`, loading environment variables, and `npm run mongo:bootstrap` in `README.md`.
 
-- [ ] **Step 5: Run local integration verification**
+- [x] **Step 5: Run local integration verification**
 
 Run:
 
@@ -356,7 +356,7 @@ MONGODB_TEST_URI='mongodb://bsr:bsr-local-only@localhost:27017/?replicaSet=rs0&a
 
 Expected: one ignored integration test runs and passes; database cleanup succeeds.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add services/core-api/src/adapters/mongo services/core-api/src/bin/mongo_bootstrap.rs services/core-api/tests/mongo_pricing_integration.rs package.json README.md
@@ -378,7 +378,7 @@ git commit -m "feat: persist MongoDB listing prices"
 - Implements: `OrderRepository::reserve(CreateOrder) -> Result<ReservedOrder, ReserveError>`.
 - Consumes: `slot_boundaries`, `BookingSlotDocument`, active `ListingDocument`, `FulfillmentMethod`, and immutable `QuoteBreakdown`.
 
-- [ ] **Step 1: Write reservation concurrency tests**
+- [x] **Step 1: Write reservation concurrency tests**
 
 Create tests that seed one rental and issue 20 simultaneous reservations for the same 30-minute interval. Assert exactly one `Ok(ReservedOrder)` and 19 `ReserveError::Unavailable` results. Also assert a buyer cannot reserve their own listing and a non-overlapping slot succeeds.
 
@@ -391,13 +391,13 @@ let conflicts = results
 assert_eq!((successes, conflicts), (1, 19));
 ```
 
-- [ ] **Step 2: Run and verify RED**
+- [x] **Step 2: Run and verify RED**
 
 Run: `cargo test -p core-api --test mongo_reservation_integration -- --ignored --nocapture`
 
 Expected: failure because MongoDB `reserve()` is not implemented.
 
-- [ ] **Step 3: Implement one transaction per reservation**
+- [x] **Step 3: Implement one transaction per reservation**
 
 First add `fulfillment: FulfillmentMethod` to `CreateOrder`. In the HTTP handler, copy `request.fulfillment` before passing the request into `prepare_quote`, then include it in `CreateOrder` so persistence never has to infer the chosen method from delivery fees.
 
@@ -413,11 +413,11 @@ Within a `ClientSession` transaction:
 
 Use the MongoDB 3.x session action API (`collection.insert_many(documents).session(&mut session).await`) and never run parallel operations inside one session.
 
-- [ ] **Step 4: Implement bounded transient retry**
+- [x] **Step 4: Implement bounded transient retry**
 
 Retry the whole transaction at most three times only when the driver marks the error with `TransientTransactionError` or `UnknownTransactionCommitResult`. Duplicate keys and validation errors return immediately.
 
-- [ ] **Step 5: Run reservation and existing API tests**
+- [x] **Step 5: Run reservation and existing API tests**
 
 Run:
 
@@ -428,7 +428,7 @@ cargo test -p core-api --test ps5_api_flow
 
 Expected: concurrency test proves one winner; existing HTTP flow remains green.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add services/core-api/src/adapters/mongo services/core-api/src/ports/order_repository.rs services/core-api/src/http/orders.rs services/core-api/tests/mongo_reservation_integration.rs
@@ -449,7 +449,7 @@ git commit -m "feat: reserve MongoDB booking slots atomically"
 - Implements: `OrderRepository::transition`.
 - Consumes: existing `validate_payment` and `OrderState::transition` domain functions.
 
-- [ ] **Step 1: Write lifecycle integration tests**
+- [x] **Step 1: Write lifecycle integration tests**
 
 Cover:
 
@@ -460,21 +460,21 @@ Cover:
 - invalid transitions return `ReserveError::InvalidTransition`;
 - concurrent runner-independent order transitions cannot create two next states.
 
-- [ ] **Step 2: Run and verify RED**
+- [x] **Step 2: Run and verify RED**
 
 Run: `cargo test -p core-api --test mongo_order_lifecycle_integration -- --ignored --nocapture`
 
 Expected: failure because payment and transition methods are not implemented by MongoDB.
 
-- [ ] **Step 3: Implement idempotent payment transaction**
+- [x] **Step 3: Implement idempotent payment transaction**
 
 Insert `order_events` with `(provider="stripe", provider_event_id)` first inside the transaction. Duplicate key returns `PaymentEventOutcome::Duplicate`. Read the order, build `StoredOrderPayment`, call `validate_payment`, and only for `Accepted` update `pending_payment -> paid` while unsetting `booking_slots.expires_at`. For expired/rejected outcomes append a bounded event type and release slots only when the reservation is expired.
 
-- [ ] **Step 4: Implement authorized compare-and-set transitions**
+- [x] **Step 4: Implement authorized compare-and-set transitions**
 
 Read order participant IDs and current state, validate actor authorization and the domain transition, then update with a filter containing both `_id` and the previously read state. A zero-match update is a concurrent conflict and maps to `InvalidTransition`. Append the state event in the same transaction.
 
-- [ ] **Step 5: Run lifecycle and domain verification**
+- [x] **Step 5: Run lifecycle and domain verification**
 
 Run:
 
@@ -485,7 +485,7 @@ cargo test -p core-api --test payment_verification --test domain_rules --test st
 
 Expected: integration and existing domain tests pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add services/core-api/src/adapters/mongo services/core-api/tests/mongo_order_lifecycle_integration.rs
@@ -510,17 +510,17 @@ git commit -m "feat: persist MongoDB order lifecycle"
 - Produces: production `AppState.orders: Arc<MongoOrderRepository>`.
 - Produces: `OrderRepository::readiness() -> Result<(), ReserveError>` with a safe default for test fakes and a MongoDB ping override.
 
-- [ ] **Step 1: Write health/readiness contract tests**
+- [x] **Step 1: Write health/readiness contract tests**
 
 Keep `/health` as a process liveness endpoint. Add `OrderRepository::readiness()` with a default `Ok(())`, then add `/ready`: ready returns `200 {"status":"ready"}` and unavailable returns `503 {"code":"database_unavailable"}`. Existing fake repositories therefore require no extra test setup.
 
-- [ ] **Step 2: Run and verify RED**
+- [x] **Step 2: Run and verify RED**
 
 Run: `cargo test -p core-api --test health_api`
 
 Expected: failure because `/ready` and its readiness port do not exist.
 
-- [ ] **Step 3: Wire MongoDB into non-demo startup**
+- [x] **Step 3: Wire MongoDB into non-demo startup**
 
 Replace `PgPoolOptions` and `PostgresOrderRepository` with:
 
@@ -537,17 +537,17 @@ let orders = MongoOrderRepository::connect(
 
 Share the repository through `Arc`. Preserve the Stripe and Supabase adapters and existing CORS behavior. Remove the PostgreSQL adapter module and runtime SQLx dependency.
 
-- [ ] **Step 4: Add readiness and deployment documentation**
+- [x] **Step 4: Add readiness and deployment documentation**
 
 Readiness uses a MongoDB `ping` command with a short server-selection timeout and maps failures to `503` without returning the URI. Update the Dockerfile and runbook with the two runtime modes, secret names, Atlas network allow-list requirement, and the fact that GitHub Pages cannot host the Rust process.
 
-- [ ] **Step 5: Run the core quality gate**
+- [x] **Step 5: Run the core quality gate**
 
 Run: `cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace`
 
 Expected: all Rust formatting, lint, unit, and HTTP tests pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add services/core-api/src services/core-api/tests services/core-api/Cargo.toml services/core-api/Dockerfile docs/runbooks/core-api.md Cargo.lock
@@ -568,7 +568,7 @@ git commit -m "feat: run core API on MongoDB"
 - Produces: `npm run mongo:check` for repeatable local database verification.
 - Consumes: Docker Compose MongoDB, bootstrap binary, Rust API, and existing test commands.
 
-- [ ] **Step 1: Write the verification script contract**
+- [x] **Step 1: Write the verification script contract**
 
 `scripts/check-mongodb.sh` must:
 
@@ -580,7 +580,7 @@ git commit -m "feat: run core API on MongoDB"
 6. run the complete repository quality gate;
 7. stop containers on exit while preserving the volume unless `MONGO_RESET=true`.
 
-- [ ] **Step 2: Add the root command and handoff documentation**
+- [x] **Step 2: Add the root command and handoff documentation**
 
 Add:
 
@@ -590,13 +590,13 @@ Add:
 
 Document the exact local start, bootstrap, API start, health/readiness URLs, fictional-data limitation, Atlas secret boundary, and cleanup commands.
 
-- [ ] **Step 3: Run full MongoDB verification**
+- [x] **Step 3: Run full MongoDB verification**
 
 Run: `npm run mongo:check`
 
 Expected: bootstrap succeeds twice, all MongoDB integration tests pass, all existing Rust/Hub/Runner tests pass, and static production builds succeed.
 
-- [ ] **Step 4: Confirm no secret or PostgreSQL runtime references remain**
+- [x] **Step 4: Confirm no secret or PostgreSQL runtime references remain**
 
 Run:
 
@@ -608,7 +608,7 @@ git diff --check
 
 Expected: both secret/runtime searches print nothing; `git diff --check` exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/check-mongodb.sh package.json README.md docs/runbooks/demo-smoke-test.md

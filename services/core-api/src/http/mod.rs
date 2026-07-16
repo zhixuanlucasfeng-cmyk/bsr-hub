@@ -15,6 +15,7 @@ pub fn health_routes() -> Router {
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/health", axum::routing::get(health::get))
+        .route("/ready", axum::routing::get(health::ready))
         .route("/v1/quotes", axum::routing::post(quotes::create))
         .route("/v1/orders", axum::routing::post(orders::create))
         .route(

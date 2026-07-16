@@ -3,11 +3,10 @@ use std::sync::Arc;
 use axum::http::{HeaderValue, Method, header};
 use core_api::{
     AppState,
-    adapters::{postgres_orders::PostgresOrderRepository, stripe::StripePaymentGateway},
+    adapters::{mongo::MongoOrderRepository, stripe::StripePaymentGateway},
     auth::SupabaseAuthVerifier,
     config::Config,
 };
-use sqlx::postgres::PgPoolOptions;
 use tower_http::cors::CorsLayer;
 
 #[tokio::main]
@@ -27,17 +26,16 @@ async fn main() {
         return;
     }
     let config = Config::from_env().expect("invalid core API configuration");
-    let pool = PgPoolOptions::new()
-        .max_connections(10)
-        .connect(&config.database_url)
-        .await
-        .expect("connect to PostgreSQL");
+    let orders = MongoOrderRepository::connect(
+        &config.mongodb_uri,
+        &config.mongodb_database,
+        config.service_fee_bps,
+        config.reservation_minutes,
+    )
+    .await
+    .expect("connect to MongoDB and bootstrap collections");
     let state = AppState {
-        orders: Arc::new(PostgresOrderRepository::with_rules(
-            pool,
-            config.service_fee_bps,
-            config.reservation_minutes,
-        )),
+        orders: Arc::new(orders),
         payments: Arc::new(StripePaymentGateway::new(
             config.stripe_secret_key,
             config.web_success_url,

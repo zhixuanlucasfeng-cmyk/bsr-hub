@@ -2,7 +2,6 @@ use core_api::config::Config;
 
 fn required() -> Vec<(&'static str, &'static str)> {
     vec![
-        ("DATABASE_URL", "postgres://localhost/bsr"),
         ("MONGODB_URI", "mongodb://localhost:27017/?replicaSet=rs0"),
         ("MONGODB_DATABASE", "bsr_hub"),
         ("SUPABASE_URL", "https://example.supabase.co"),

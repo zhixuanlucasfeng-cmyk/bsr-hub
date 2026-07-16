@@ -39,6 +39,7 @@ pub struct CreateOrder {
     pub buyer_id: Uuid,
     pub start_at: Option<OffsetDateTime>,
     pub end_at: Option<OffsetDateTime>,
+    pub fulfillment: FulfillmentMethod,
     pub quote: QuoteBreakdown,
 }
 
@@ -129,6 +130,10 @@ impl ReserveError {
 
 #[async_trait]
 pub trait OrderRepository: Send + Sync {
+    async fn readiness(&self) -> Result<(), ReserveError> {
+        Ok(())
+    }
+
     async fn pricing(&self, listing_id: Uuid) -> Result<PricingSnapshot, ReserveError>;
 
     async fn reserve(&self, order: CreateOrder) -> Result<ReservedOrder, ReserveError>;

@@ -55,6 +55,26 @@ cargo run -p core-api
 
 Copy `.env.example` to `.env.local` and provide test/development credentials. Never use live Stripe keys for this MVP.
 
+### MongoDB persistent mode
+
+Docker Desktop is required for the local persistent database. The setup uses a single-node replica set because reservations and payment transitions require transactions.
+
+```bash
+npm run mongo:up
+cp .env.mongodb.example .env.local
+set -a; source .env.local; set +a
+npm run mongo:bootstrap
+cargo run -p core-api
+```
+
+The bootstrap command is idempotent and loads only fictional classroom listings. MongoDB credentials remain in the Rust backend environment; they are never shipped to either frontend. Use `npm run mongo:down` to stop MongoDB while preserving data, or `npm run mongo:reset` to delete the local volume.
+
+Run the complete persistence release gate—including two bootstrap passes, real replica-set transaction tests, Rust checks, and both frontend checks—with:
+
+```bash
+npm run mongo:check
+```
+
 Key safeguards:
 
 - all money is stored and calculated in integer U.S. cents;
@@ -62,7 +82,7 @@ Key safeguards:
 - sellers choose either 30-minute or daily billing; partial units are rounded up by the server (for example, 31 minutes is two units);
 - the service fee defaults to 600 basis points (6%);
 - pending-payment inventory holds expire after 30 minutes;
-- PostgreSQL prevents overlapping active bookings;
+- MongoDB transactions and a unique half-hour slot index prevent overlapping active bookings;
 - Stripe webhook signatures are checked within a five-minute window;
 - Stripe event IDs are stored before an order is marked paid, and event type, paid status, order, amount, currency, and reservation expiry must all match;
 - public listing queries do not need to expose private street addresses.
