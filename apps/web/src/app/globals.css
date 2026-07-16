@@ -39,3 +39,5 @@
 .support-launcher-icon:focus-visible{outline:3px solid #ccff00;outline-offset:3px}
 .assistant-panel{left:18px;right:auto}
 @media(max-width:650px){.support-launcher-icon{left:14px;bottom:16px}.assistant-panel{left:16px;right:auto;bottom:16px}}
+.listing-detail-page .global-nav-links{height:auto}
+@media(max-width:650px){.listing-detail-page .support-launcher-icon{bottom:84px}}

@@ -43,7 +43,11 @@ export default function Home() {
     try {
       const stored = sessionStorage.getItem(demoSessionKey);
       setSessionId(stored);
-      if (!stored) setLoginOpen(true);
+      const intent = new URLSearchParams(window.location.search).get("intent");
+      if (intent === "orders" || intent === "create") {
+        if (stored && stored !== "guest") setView(intent);
+        else { pendingAction.current = () => setView(intent); setLoginOpen(true); }
+      } else if (!stored) setLoginOpen(true);
       if (stored && stored !== "guest" && personas.some((item) => item.id === stored)) setPersona(stored);
     } catch { setLoginOpen(true); }
   }, []);
