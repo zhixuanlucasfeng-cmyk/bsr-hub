@@ -11,7 +11,8 @@ const requirements = [
   ["apps/web/src/components/LoginModal.tsx", ["role=\"dialog\"", "Demo identities"]],
   ["apps/web/src/components/HeroSection.tsx", ["Use more.", "Own less."]],
   ["apps/web/src/components/MarketplaceListingCard.tsx", ["listingPriceLabel", "sellerFor"]],
-  ["apps/web/src/components/FeaturedListings.tsx", ["MarketplaceListingCard"]],
+  ["apps/web/src/components/FeaturedListings.tsx", ["MarketplaceListingCard", "RevealOnScroll"]],
+  ["apps/web/src/components/RevealOnScroll.tsx", ["IntersectionObserver", "prefers-reduced-motion"]],
   ["apps/web/src/components/BusinessShowcase.tsx", ["Buy second-hand"]],
   ["apps/web/src/components/SiteFooter.tsx", ["BrandLogo", "Demo marketplace"]],
   ["apps/web/src/components/ShopAssistant.tsx", ["support-launcher-icon", "Open BSR shopping assistant"]],
@@ -24,6 +25,8 @@ const requirements = [
   ["apps/runner/src/components/RunnerNav.tsx", ["BrandLogo", "brand-logo"]],
   ["apps/runner/src/app/page.tsx", ["BrandLogo", "footer-logo"]],
   ["apps/web/src/app/globals.css", ["@import \"tailwindcss\"", ".brand-logo", ".footer-logo"]],
+  ["apps/web/next.config.mjs", ["trailingSlash: true"]],
+  ["apps/runner/next.config.mjs", ["trailingSlash: true"]],
   ["apps/runner/src/app/globals.css", [".brand-logo", ".footer-logo"]],
 ];
 
