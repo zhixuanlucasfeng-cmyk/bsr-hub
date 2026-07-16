@@ -6,6 +6,11 @@ const requirements = [
   ["apps/runner/src/components/BrandLogo.tsx", ["NEXT_PUBLIC_BASE_PATH"]],
   ["apps/web/src/app/layout.tsx", ["bsr-icon.png"]],
   ["apps/runner/src/app/layout.tsx", ["bsr-icon.png"]],
+  ["apps/web/src/app/page.tsx", ["BrandLogo", "brand-logo", "footer-logo"]],
+  ["apps/runner/src/components/RunnerNav.tsx", ["BrandLogo", "brand-logo"]],
+  ["apps/runner/src/app/page.tsx", ["BrandLogo", "footer-logo"]],
+  ["apps/web/src/app/globals.css", [".brand-logo", ".footer-logo"]],
+  ["apps/runner/src/app/globals.css", [".brand-logo", ".footer-logo"]],
 ];
 
 const assets = [

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ApplicationView } from "../components/ApplicationView";
 import { AdminView, EarningsView } from "../components/DashboardViews";
+import { BrandLogo } from "../components/BrandLogo";
 import { HomeView } from "../components/HomeView";
 import { PostTaskView, type TaskDraft } from "../components/PostTaskView";
 import { RunnerNav, type Screen } from "../components/RunnerNav";
@@ -109,6 +110,6 @@ export default function RunnerDemo() {
     {screen === "tracking" && selected && <TaskTrackingView task={selected} persona={persona} busy={busy} onBack={() => setScreen("market")} onAction={act}/>} 
     {screen === "earnings" && <EarningsView earnings={earnings} tasks={tasks}/>} 
     {screen === "admin" && <AdminView summary={summary} applications={applications} tasks={tasks} onApprove={(id) => { approve(id).catch((error) => setNotice(error.message)); }}/>} 
-    <footer><div className="footer-brand"><span className="brand-mark">B</span><div><strong>BSR Runner</strong><small>A BSR Hub classroom venture</small></div></div><p>Fair local tasks. Protected payments. Dignified flexible work.</p><div><span>Fictional demo</span><span>Babson Summer Study</span><span>SDG 8 & 10</span></div></footer>
+    <footer><div className="footer-brand"><BrandLogo variant="horizontal" className="footer-logo"/><small>A BSR Hub classroom venture</small></div><p>Fair local tasks. Protected payments. Dignified flexible work.</p><div><span>Fictional demo</span><span>Babson Summer Study</span><span>SDG 8 & 10</span></div></footer>
   </div>;
 }

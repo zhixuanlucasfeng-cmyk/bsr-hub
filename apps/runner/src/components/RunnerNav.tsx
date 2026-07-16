@@ -1,3 +1,4 @@
+import { BrandLogo } from "./BrandLogo";
 import type { RunnerPersona } from "../lib/contracts";
 
 export type Screen = "home" | "post" | "market" | "apply" | "tracking" | "earnings" | "admin";
@@ -15,8 +16,7 @@ export function RunnerNav({ persona, screen, taskCount, onPersona, onScreen, onR
   return (
     <header className="topbar">
       <button className="brand" onClick={() => onScreen("home")} aria-label="BSR Runner home">
-        <span className="brand-mark">B</span>
-        <span>BSR <strong>Runner</strong></span>
+        <BrandLogo variant="horizontal" className="brand-logo" />
       </button>
       <nav aria-label="Primary navigation">
         <button className={screen === "market" ? "active" : ""} onClick={() => onScreen("market")}>Jobs <span>{taskCount}</span></button>
