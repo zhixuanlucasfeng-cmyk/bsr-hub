@@ -39,3 +39,17 @@ All checks used the deployed GitHub Pages site with a 390 × 844 mobile viewport
 - No console errors or horizontal overflow were recorded.
 
 No real payments, addresses, identities, applications, or employment records were used.
+
+## Image and persistent-cache verification — 2026-07-16
+
+Verified the production-shaped `dist-pages` artifact at commit `03da49c` under the real `/bsr-hub/` base path.
+
+- All 19 source photographs remained byte-for-byte unchanged; the optimizer generated 57 responsive WebP derivatives.
+- The complete derivative set is 3,726,744 bytes: small cards use an 80-quality detail-preserving profile, while large cards and detail images use quality 84.
+- Every image stayed inside the enforced budgets: 90 KiB for small cards, 180 KiB for large cards, and 270 KiB for detail images.
+- Hub preloads only the first PS5 hero/card image; the remaining listing images stay lazy.
+- No production CSS requests Google Fonts, removing a blocking third-party connection.
+- The production artifact includes `/bsr-hub/sw.js`, which registered successfully in the local browser and precached `/bsr-hub/`, `/bsr-hub/hub/`, and `/bsr-hub/runner/`.
+- A second controlled Hub reload requested no hashed `/_next/static/` JavaScript or CSS from the server, confirming cache-first reuse. Images used stale-while-revalidate and navigations used network-first with a cached fallback.
+- Hub and Runner both rendered successfully from the production artifact with their expected titles, navigation, listings/tasks, and trust disclosures.
+- Sensitive or dynamic paths (`/api/`, `/auth/`, `/checkout/`, `/payment/`, and `/payments/`) and requests carrying authorization headers are explicitly excluded from the cache.
