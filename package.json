@@ -9,6 +9,9 @@
     "postcss": "$postcss"
   },
   "scripts": {
+    "mongo:up": "docker compose -f compose.mongodb.yml up -d --wait && bash scripts/init-mongo-replica.sh",
+    "mongo:down": "docker compose -f compose.mongodb.yml down",
+    "mongo:reset": "docker compose -f compose.mongodb.yml down -v",
     "images:optimize": "node scripts/optimize-images.mjs",
     "dev": "npm run dev -w @bsr-hub/web",
     "demo": "bash scripts/demo.sh",
