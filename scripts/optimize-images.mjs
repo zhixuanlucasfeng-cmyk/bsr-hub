@@ -15,6 +15,7 @@ for (const variant of ["card-sm", "card-lg", "detail"]) {
 
 let originalBytes = 0;
 let optimizedBytes = 0;
+const variantBytes = { cardSmall: 0, cardLarge: 0, detail: 0 };
 
 for (const input of sources) {
   const stem = basename(input, extname(input));
@@ -23,13 +24,34 @@ for (const input of sources) {
   const detail = join(optimizedRoot, "detail", `${stem}.webp`);
 
   originalBytes += (await stat(input)).size;
-  await sharp(input).rotate().resize(480, 360, { fit: "cover", position: "attention" }).webp({ quality: 76 }).toFile(cardSmall);
-  await sharp(input).rotate().resize(960, 720, { fit: "cover", position: "attention" }).webp({ quality: 80 }).toFile(cardLarge);
-  await sharp(input).rotate().resize({ width: 1440, withoutEnlargement: true }).webp({ quality: 82 }).toFile(detail);
+  await sharp(input)
+    .rotate()
+    .resize(480, 360, { fit: "cover", position: "attention" })
+    .webp({ quality: 80, effort: 6, smartSubsample: true, preset: "photo" })
+    .toFile(cardSmall);
+  await sharp(input)
+    .rotate()
+    .resize(960, 720, { fit: "cover", position: "attention" })
+    .webp({ quality: 84, effort: 6, smartSubsample: true, preset: "photo" })
+    .toFile(cardLarge);
+  await sharp(input)
+    .rotate()
+    .resize({ width: 1440, withoutEnlargement: true })
+    .webp({ quality: 84, effort: 6, smartSubsample: true, preset: "photo" })
+    .toFile(detail);
 
-  optimizedBytes += (await stat(cardSmall)).size + (await stat(cardLarge)).size + (await stat(detail)).size;
+  const cardSmallBytes = (await stat(cardSmall)).size;
+  const cardLargeBytes = (await stat(cardLarge)).size;
+  const detailBytes = (await stat(detail)).size;
+  variantBytes.cardSmall += cardSmallBytes;
+  variantBytes.cardLarge += cardLargeBytes;
+  variantBytes.detail += detailBytes;
+  optimizedBytes += cardSmallBytes + cardLargeBytes + detailBytes;
 }
 
 console.log(`Optimized ${sources.length} sources into ${sources.length * 3} WebP files.`);
 console.log(`Original JPEG total: ${(originalBytes / 1048576).toFixed(2)} MiB.`);
 console.log(`All responsive variants: ${(optimizedBytes / 1048576).toFixed(2)} MiB.`);
+console.log(`card-sm total: ${(variantBytes.cardSmall / 1048576).toFixed(2)} MiB.`);
+console.log(`card-lg total: ${(variantBytes.cardLarge / 1048576).toFixed(2)} MiB.`);
+console.log(`detail total: ${(variantBytes.detail / 1048576).toFixed(2)} MiB.`);
