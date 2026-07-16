@@ -2,7 +2,7 @@ name: Deploy BSR team demo
 
 on:
   push:
-    branches: [codex/bsr-runner]
+    branches: [main, codex/bsr-runner]
   workflow_dispatch:
 
 permissions:
