@@ -10,6 +10,7 @@ import { LoginModal } from "../components/LoginModal";
 import { ShopAssistant } from "../components/ShopAssistant";
 import { SiteFooter } from "../components/SiteFooter";
 import { filterMarketplaceListings, type CategoryId } from "../lib/categories";
+import { readMarketplaceEntry } from "../lib/entry-route";
 import { demoSessionKey, fulfillmentLabel } from "../lib/marketplace";
 import { hubStaticDemo } from "../lib/static-demo";
 import { allowedActions, money, personas, type DemoOrder, type Listing } from "../lib/types";
@@ -43,7 +44,9 @@ export default function Home() {
     try {
       const stored = sessionStorage.getItem(demoSessionKey);
       setSessionId(stored);
-      const intent = new URLSearchParams(window.location.search).get("intent");
+      const entry = readMarketplaceEntry(window.location.search);
+      const intent = entry.intent;
+      setType(entry.listingType);
       if (intent === "orders" || intent === "create") {
         if (stored && stored !== "guest") setView(intent);
         else { pendingAction.current = () => setView(intent); setLoginOpen(true); }

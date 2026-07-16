@@ -16,6 +16,9 @@ cp -R apps/runner/out/. dist-pages/runner/
 
 test -f dist-pages/index.html
 test -f dist-pages/hub/index.html
+test -f dist-pages/hub/orders/index.html
+test -f dist-pages/hub/create/index.html
+test -f dist-pages/hub/help/index.html
 test -f dist-pages/runner/index.html
 
 echo "GitHub Pages artifact ready: dist-pages"

@@ -40,6 +40,14 @@ const help = await readFile("apps/web/src/app/help/page.tsx", "utf8").catch(() =
 for (const marker of ["protected-payment", "help-center", "terms", "privacy"]) {
   if (!help.includes(marker)) failures.push(`Help page is missing ${marker}`);
 }
+for (const [file, marker] of [
+  ["apps/web/src/app/orders/page.tsx", "intent=\"orders\""],
+  ["apps/web/src/app/create/page.tsx", "intent=\"create\""],
+  ["apps/web/src/components/IntentRedirect.tsx", "window.location.replace"],
+]) {
+  const source = await readFile(file, "utf8").catch(() => "");
+  if (!source.includes(marker)) failures.push(`${file} is missing ${marker}`);
+}
 
 if (failures.length) {
   console.error(failures.join("\n"));
