@@ -7,6 +7,11 @@ export interface Listing {
   unitPriceCents: number; depositCents: number; deliveryFeeCents: number;
   billingUnit: "thirty_minutes" | "day"; fulfillment: Fulfillment[]; accent: string; icon: string;
   imageSrc: string; imageAlt: string;
+  imageGallery?: Array<{ src: string; alt: string }>;
+  sellerName?: string; sellerAvatar?: string; distanceMiles?: number;
+  rating?: number; reviewCount?: number;
+  specifications?: Array<{ label: string; value: string }>;
+  usageNotes?: string[];
 }
 
 export interface Quote {

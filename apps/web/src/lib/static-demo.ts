@@ -1,6 +1,6 @@
 import type { DemoOrder, Fulfillment, Listing, OrderState, Quote } from "./types.ts";
 
-const catalog: Listing[] = [
+export const demoCatalog: Listing[] = [
   { id:"ps5-slim", ownerId:"seller-demo", title:"PS5 Slim + Two Controllers", listingType:"rental", category:"Gaming", description:"Quiet, clean console with Spider-Man 2 and HDMI cable. Great for a weekend with friends.", city:"Wellesley", state:"MA", condition:"Like new", unitPriceCents:1200, depositCents:10000, deliveryFeeCents:800, billingUnit:"thirty_minutes", fulfillment:["pickup","delivery","owner_location"], accent:"#6d5dfc", icon:"🎮", imageSrc:"/images/listings/ps5-slim.jpg", imageAlt:"White PlayStation 5 console with two controllers" },
   { id:"ps5-pro", ownerId:"seller-demo", title:"PS5 Pro Creator Setup", listingType:"rental", category:"Gaming", description:"High-performance console with headset and capture card for streams or tournaments.", city:"Newton", state:"MA", condition:"Excellent", unitPriceCents:1800, depositCents:15000, deliveryFeeCents:1200, billingUnit:"thirty_minutes", fulfillment:["pickup","delivery"], accent:"#8b5cf6", icon:"🕹️", imageSrc:"/images/listings/ps5-pro.jpg", imageAlt:"Gaming console, controller, and streaming headset setup" },
   { id:"macbook", ownerId:"tech-demo", title:"MacBook Pro M2 14-inch", listingType:"rental", category:"Computers", description:"Portable editing and development laptop with charger and protective sleeve.", city:"Needham", state:"MA", condition:"Excellent", unitPriceCents:5200, depositCents:20000, deliveryFeeCents:1000, billingUnit:"day", fulfillment:["pickup","delivery"], accent:"#0ea5e9", icon:"💻", imageSrc:"/images/listings/macbook.jpg", imageAlt:"Open MacBook Pro laptop on a clean desk" },
@@ -29,7 +29,7 @@ export function createHubStaticDemo() {
   let sequence = 1;
 
   function listing(id: string) {
-    const found = catalog.find((item) => item.id === id);
+    const found = demoCatalog.find((item) => item.id === id);
     if (!found) throw new Error("Listing not found");
     return found;
   }
@@ -45,7 +45,7 @@ export function createHubStaticDemo() {
   }
 
   return {
-    listings: () => catalog.map((item) => ({ ...item, fulfillment:[...item.fulfillment] })),
+    listings: () => demoCatalog.map((item) => ({ ...item, fulfillment:[...item.fulfillment] })),
     ordersFor: (persona: string) => orders.filter((order) => order.buyerId === persona || order.sellerId === persona).map((order) => ({ ...order, quote:{...order.quote} })),
     quote,
     createOrder(listingId: string, units: number, fulfillment: Fulfillment) {
@@ -64,3 +64,9 @@ export function createHubStaticDemo() {
     },
   };
 }
+
+export function getDemoListing(id: string) {
+  return demoCatalog.find((listing) => listing.id === id);
+}
+
+export const hubStaticDemo = createHubStaticDemo();
