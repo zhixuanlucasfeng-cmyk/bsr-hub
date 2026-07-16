@@ -37,5 +37,12 @@
     <section class="trust"><span>✓ Fictional demo data</span><span>✓ Protected-payment journeys</span><span>✓ Rust rules preserved in source</span><span>✓ Built for SDGs 8 & 10</span></section>
   </main>
   <footer><strong>BSR</strong><span>Use more. Own less. Move together.</span><span>© 2026 Classroom prototype</span></footer>
+  <script>
+    if ("serviceWorker" in navigator && location.protocol !== "file:") {
+      addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(() => undefined);
+      }, { once: true });
+    }
+  </script>
 </body>
 </html>

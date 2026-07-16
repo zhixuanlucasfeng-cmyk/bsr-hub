@@ -20,5 +20,6 @@ test -f dist-pages/hub/orders/index.html
 test -f dist-pages/hub/create/index.html
 test -f dist-pages/hub/help/index.html
 test -f dist-pages/runner/index.html
+test -f dist-pages/sw.js
 
 echo "GitHub Pages artifact ready: dist-pages"

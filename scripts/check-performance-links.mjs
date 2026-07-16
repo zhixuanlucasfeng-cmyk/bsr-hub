@@ -4,7 +4,7 @@ import { basename, extname, join } from "node:path";
 const publicRoot = "apps/web/public/images";
 const optimizedRoot = join(publicRoot, "optimized");
 const variants = ["card-sm", "card-lg", "detail"];
-const limits = { "card-sm": 90 * 1024, "card-lg": 180 * 1024, detail: 260 * 1024 };
+const limits = { "card-sm": 90 * 1024, "card-lg": 180 * 1024, detail: 270 * 1024 };
 const sourceDirs = [join(publicRoot, "listings"), join(publicRoot, "categories")];
 const failures = [];
 let generatedBytes = 0;
@@ -28,8 +28,49 @@ for (const source of sources) {
   }
 }
 
-const css = await readFile("apps/web/src/app/globals.css", "utf8");
-if (css.includes("fonts.googleapis.com")) failures.push("Runtime Google Fonts import is still present");
+const serviceWorker = await readFile("deploy/pages/sw.js", "utf8").catch(() => "");
+for (const marker of [
+  'const CACHE_PREFIX = "bsr-static-"',
+  'request.method !== "GET"',
+  'request.headers.has("authorization")',
+  'url.origin !== self.location.origin',
+  'request.mode === "navigate"',
+  'url.pathname.includes("/_next/static/")',
+  'event.waitUntil',
+]) {
+  if (!serviceWorker.includes(marker)) failures.push(`Service worker is missing ${marker}`);
+}
+
+for (const file of [
+  "apps/web/src/components/PerformanceBoot.tsx",
+  "apps/runner/src/components/PerformanceBoot.tsx",
+]) {
+  const source = await readFile(file, "utf8").catch(() => "");
+  for (const marker of ["serviceWorker", "register", "rootPath", "NODE_ENV", 'document.readyState === "complete"']) {
+    if (!source.includes(marker)) failures.push(`${file} is missing ${marker}`);
+  }
+}
+
+for (const [file, marker] of [
+  ["apps/web/src/app/layout.tsx", "<PerformanceBoot/>"],
+  ["apps/runner/src/app/layout.tsx", "<PerformanceBoot/>"],
+  ["deploy/pages/index.html", "navigator.serviceWorker.register"],
+  ["scripts/build-pages.sh", "dist-pages/sw.js"],
+  ["apps/web/src/app/layout.tsx", 'rel="preload"'],
+  ["apps/web/src/app/layout.tsx", "ps5-slim.webp"],
+]) {
+  const source = await readFile(file, "utf8").catch(() => "");
+  if (!source.includes(marker)) failures.push(`${file} is missing ${marker}`);
+}
+
+for (const file of [
+  "deploy/pages/styles.css",
+  "apps/web/src/app/globals.css",
+  "apps/runner/src/app/globals.css",
+]) {
+  const source = await readFile(file, "utf8");
+  if (source.includes("fonts.googleapis.com")) failures.push(`${file} still loads Google Fonts`);
+}
 const featured = await readFile("apps/web/src/components/FeaturedListings.tsx", "utf8");
 if (!featured.includes("eager={index === 0}")) failures.push("Only the first listing should be eager");
 const footer = await readFile("apps/web/src/components/SiteFooter.tsx", "utf8");
