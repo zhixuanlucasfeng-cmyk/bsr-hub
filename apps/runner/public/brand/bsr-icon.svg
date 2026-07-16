@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">BSR icon</title>
+  <desc id="desc">White BSR letters on a charcoal rounded square with a lime reuse arrow.</desc>
+  <rect x="24" y="24" width="464" height="464" rx="112" fill="#10121A"/>
+  <text x="256" y="299" fill="#FFFFFF" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="152" font-weight="900" letter-spacing="-11">BSR</text>
+  <circle cx="374" cy="382" r="58" fill="#D9FF70"/>
+  <path d="M346 374a32 32 0 0 1 50-16" fill="none" stroke="#10121A" stroke-width="12" stroke-linecap="round"/>
+  <path d="m390 344 13 18-22 3" fill="#10121A"/>
+  <path d="M402 390a32 32 0 0 1-50 16" fill="none" stroke="#10121A" stroke-width="12" stroke-linecap="round"/>
+  <path d="m358 420-13-18 22-3" fill="#10121A"/>
+</svg>
