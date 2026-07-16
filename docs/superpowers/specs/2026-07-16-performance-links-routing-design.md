@@ -19,7 +19,8 @@ Reduce first-load latency, display marketplace photography without square distor
 
 - Add a deterministic Node preprocessing script using `sharp`.
 - Produce committed WebP variants from the current JPEG originals:
-  - `card`: 720 × 540, 4:3 crop for listing and hero cards.
+  - `card-sm`: 480 × 360, 4:3 crop for narrow listing and hero cards.
+  - `card-lg`: 960 × 720, 4:3 crop for wide and high-density listing and hero cards.
   - `detail`: maximum 1,440 pixels wide while preserving the source aspect ratio.
 - Do not use 1:1 square presentation for primary images.
 - Listing and hero cards use the 4:3 card asset with explicit width/height, `srcset`, `sizes`, and asynchronous decoding.
