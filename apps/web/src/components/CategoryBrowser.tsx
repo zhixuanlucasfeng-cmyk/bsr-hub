@@ -1,26 +1,27 @@
 "use client";
 
-import Image from "next/image";
-import { categories, type CategoryId } from "../lib/categories";
+import type { IconName } from "./LinearIcon";
+import { LinearIcon } from "./LinearIcon";
+import type { CategoryId } from "../lib/categories";
 
-interface CategoryBrowserProps {
-  selected: CategoryId;
-  onSelect: (categoryId: CategoryId) => void;
-}
+interface CategoryBrowserProps { selected: CategoryId; onSelect: (categoryId: CategoryId) => void }
+
+const categoryItems: Array<{ id: CategoryId; label: string; icon: IconName }> = [
+  { id: "gaming", label: "Gaming consoles", icon: "game" },
+  { id: "cameras", label: "Camera gear", icon: "camera" },
+  { id: "tools", label: "Power tools", icon: "tool" },
+  { id: "computers", label: "Office equipment", icon: "laptop" },
+  { id: "studios", label: "Creative spaces", icon: "studio" },
+  { id: "second-hand", label: "Second-hand tech", icon: "reuse" },
+];
 
 export function CategoryBrowser({ selected, onSelect }: CategoryBrowserProps) {
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-
-  return <section className="category-section" aria-labelledby="category-heading">
-    <header>
-      <div><p className="eyebrow">BROWSE REAL EXAMPLES</p><h2 id="category-heading">What do you need today?</h2></div>
-      {selected !== "all" && <button className="category-clear" onClick={() => onSelect("all")}>View all listings</button>}
-    </header>
-    <div className="category-row">
-      {categories.map(category => <button key={category.id} className={`category-card ${selected === category.id ? "selected" : ""}`} aria-pressed={selected === category.id} onClick={() => onSelect(selected === category.id ? "all" : category.id)}>
-        <span className="category-photo"><Image src={`${basePath}${category.imageSrc}`} alt="" fill sizes="180px" /></span>
-        <span className="category-copy"><strong>{category.label}</strong><small>{category.example}</small></span>
-      </button>)}
+  return <section id="categories" className="scroll-mt-28 px-5 py-6 sm:px-8 lg:px-12" aria-labelledby="category-heading">
+    <div className="mx-auto max-w-[1320px]">
+      <div className="mb-5 flex items-end justify-between"><div><p className="text-xs font-extrabold uppercase tracking-[.16em] text-brand">Browse the community</p><h2 id="category-heading" className="mt-2 font-[Manrope] text-3xl font-bold tracking-tight text-zinc-950">Find your category</h2></div>{selected !== "all" && <button className="text-sm font-bold text-brand hover:text-brand-deep" onClick={() => onSelect("all")}>View all</button>}</div>
+      <div className="flex gap-3 overflow-x-auto pb-4 [scrollbar-width:none]">
+        {categoryItems.map((category) => { const active = selected === category.id; return <button key={category.id} aria-pressed={active} onClick={() => onSelect(active ? "all" : category.id)} className={`flex min-w-[174px] items-center gap-3 rounded-card px-4 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${active ? "bg-brand text-white" : "bg-white text-zinc-800"}`}><span className={`grid size-11 shrink-0 place-items-center rounded-xl ${active ? "bg-white/16" : "bg-violet-50 text-brand"}`}><LinearIcon name={category.icon} className="size-5"/></span><span className="text-sm font-bold leading-5">{category.label}</span></button>; })}
+      </div>
     </div>
   </section>;
 }

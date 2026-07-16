@@ -1,58 +1,109 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { BrandLogo } from "../components/BrandLogo";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { BusinessShowcase } from "../components/BusinessShowcase";
 import { CategoryBrowser } from "../components/CategoryBrowser";
-import { ListingImage } from "../components/ListingImage";
+import { FeaturedListings } from "../components/FeaturedListings";
+import { GlobalNav } from "../components/GlobalNav";
+import { HeroSection } from "../components/HeroSection";
+import { LoginModal } from "../components/LoginModal";
 import { ShopAssistant } from "../components/ShopAssistant";
+import { SiteFooter } from "../components/SiteFooter";
 import { filterMarketplaceListings, type CategoryId } from "../lib/categories";
-import { createHubStaticDemo } from "../lib/static-demo";
-import { allowedActions, money, personas, type DemoOrder, type Fulfillment, type Listing, type Quote } from "../lib/types";
+import { demoSessionKey, fulfillmentLabel } from "../lib/marketplace";
+import { hubStaticDemo } from "../lib/static-demo";
+import { allowedActions, money, personas, type DemoOrder, type Listing } from "../lib/types";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 const STATIC_DEMO = process.env.NEXT_PUBLIC_STATIC_DEMO === "true";
 const actionLabels: Record<string, string> = { mark_paid:"Complete protected payment", confirm:"Seller confirms", activate:"Start rental", fulfill:"Mark fulfilled", return:"Return item", complete:"Complete order", cancel:"Cancel" };
-const fulfillmentLabels: Record<Fulfillment,string> = { pickup:"Pick up", delivery:"Local delivery", owner_location:"Use at owner location", on_site:"Use on site" };
+type View = "market" | "orders" | "create";
 
 export default function Home() {
-  const [listings,setListings]=useState<Listing[]>([]); const [orders,setOrders]=useState<DemoOrder[]>([]);
-  const [persona,setPersona]=useState("buyer-demo"); const [query,setQuery]=useState(""); const [type,setType]=useState("all");
-  const [categoryId,setCategoryId]=useState<CategoryId>("all");
-  const [selected,setSelected]=useState<Listing|null>(null); const [fulfillment,setFulfillment]=useState<Fulfillment>("pickup");
-  const [units,setUnits]=useState(2); const [quote,setQuote]=useState<Quote|null>(null); const [view,setView]=useState<"market"|"orders"|"create">("market");
-  const [demo] = useState(createHubStaticDemo);
-  const [notice,setNotice]=useState(STATIC_DEMO ? "Public demo mode — no real payments" : "Rust API connected"); const activePersona=personas.find(p=>p.id===persona)!;
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [orders, setOrders] = useState<DemoOrder[]>([]);
+  const [persona, setPersona] = useState("buyer-demo");
+  const [query, setQuery] = useState("");
+  const [type, setType] = useState("all");
+  const [categoryId, setCategoryId] = useState<CategoryId>("all");
+  const [view, setView] = useState<View>("market");
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [notice, setNotice] = useState(STATIC_DEMO ? "Public demo mode — no real payments" : "Rust API connected");
+  const pendingAction = useRef<null | (() => void)>(null);
+  const activePersona = personas.find((item) => item.id === persona) ?? personas[0];
 
-  const loadOrders=async(id=persona)=>{ if(STATIC_DEMO){setOrders(demo.ordersFor(id));return;} try { const r=await fetch(`${API}/v1/demo/orders?persona=${id}`); setOrders(await r.json()); } catch { setNotice("Rust API offline — run npm run demo"); } };
-  useEffect(()=>{ if(STATIC_DEMO){setListings(demo.listings());return;} fetch(`${API}/v1/demo/listings`).then(r=>r.json()).then(setListings).catch(()=>setNotice("Rust API offline — run npm run demo")); },[demo]);
-  useEffect(()=>{ loadOrders(); },[persona]);
-  const filtered=useMemo(()=>filterMarketplaceListings(listings,{query,listingType:type,categoryId}),[listings,type,query,categoryId]);
-  const selectCategory=(nextCategory:CategoryId)=>{ setCategoryId(nextCategory); requestAnimationFrame(()=>document.getElementById("market")?.scrollIntoView({behavior:"smooth"})); };
-  const scrollToMarket=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>document.getElementById("market")?.scrollIntoView({behavior:"smooth"})));
-  const assistantRent=()=>{setView("market");setType("rental");setCategoryId("all");scrollToMarket();};
-  const assistantWorkspace=()=>{setView("market");setType("workspace");setCategoryId("studios");scrollToMarket();};
-  const assistantDelivery=()=>{setView("market");setType("all");setCategoryId("all");scrollToMarket();};
+  const loadOrders = async (id = persona) => {
+    if (STATIC_DEMO) { setOrders(hubStaticDemo.ordersFor(id)); return; }
+    try { const response = await fetch(`${API}/v1/demo/orders?persona=${id}`); setOrders(await response.json()); }
+    catch { setNotice("Rust API offline — run npm run demo"); }
+  };
 
-  async function openListing(listing:Listing){ setSelected(listing); setFulfillment(listing.fulfillment[0]); setUnits(listing.billingUnit==="thirty_minutes"?2:1); setQuote(null); }
-  async function getQuote(){ if(!selected)return; if(STATIC_DEMO){try{setQuote(demo.quote(selected.id,units,fulfillment));}catch{setNotice("That option is unavailable.");}return;} const r=await fetch(`${API}/v1/demo/quote`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({listingId:selected.id,units,fulfillment})}); if(!r.ok){setNotice("That option is unavailable.");return;} setQuote(await r.json()); }
-  async function createOrder(){ if(!selected)return; if(STATIC_DEMO){demo.createOrder(selected.id,units,fulfillment);setSelected(null);setQuote(null);setView("orders");setNotice("Demo reservation created. BSR Hub would hold payment until completion.");await loadOrders();return;} const r=await fetch(`${API}/v1/demo/orders`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({listingId:selected.id,units,fulfillment})}); if(r.ok){setSelected(null);setQuote(null);setView("orders");setNotice("Reservation created. BSR Hub holds payment until completion.");await loadOrders();} }
-  async function act(order:DemoOrder,action:string){ if(STATIC_DEMO){try{demo.act(order.id,action);setNotice(`${actionLabels[action]} — validated by the same order rules as the Rust API.`);await loadOrders();}catch{setNotice("That action is not allowed in the current state.");}return;} const r=await fetch(`${API}/v1/demo/orders/${order.id}/actions`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action})}); if(r.ok){setNotice(`${actionLabels[action]} — saved by Rust state machine.`);await loadOrders();} else setNotice("That action is not allowed in the current state."); }
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem(demoSessionKey);
+      setSessionId(stored);
+      if (!stored) setLoginOpen(true);
+      if (stored && stored !== "guest" && personas.some((item) => item.id === stored)) setPersona(stored);
+    } catch { setLoginOpen(true); }
+  }, []);
 
-  return <main>
-    <nav><button className="brand" onClick={()=>setView("market")} aria-label="BSR Hub home"><BrandLogo variant="horizontal" className="brand-logo"/></button><div className="navlinks"><button onClick={()=>setView("market")}>Explore</button><button onClick={()=>setView("orders")}>My orders <b>{orders.length}</b></button><button className="primary small" onClick={()=>setView("create")}>+ List something</button></div><label className="persona">Demo as <select value={persona} onChange={e=>{setPersona(e.target.value);setNotice(`Switched to ${e.target.options[e.target.selectedIndex].text}`)}}>{personas.map(p=><option key={p.id} value={p.id}>{p.name} · {p.role}</option>)}</select><i>{activePersona.initials}</i></label></nav>
-    <div className="status"><span></span>{notice}</div>
-    {view==="market"&&<>
-      <section className="hero"><div><p className="eyebrow">COMMUNITY ACCESS, WITHOUT THE PRICE TAG</p><h1>Use more.<br/><em>Own less.</em></h1><p>Rent products, book creative spaces, and give second-hand goods a new life — all from people nearby.</p><div className="hero-actions"><button className="primary" onClick={()=>document.getElementById("market")?.scrollIntoView({behavior:"smooth"})}>Explore nearby</button><button className="ghost" onClick={()=>setView("create")}>Earn from your things →</button></div><div className="trust"><span>✓ Protected payments</span><span>✓ Verified community</span><span>✓ Local delivery</span></div></div><div className="hero-art"><div className="orbit one">🎮<small>PS5 from $12</small></div><div className="orbit two">🎬<small>Studios nearby</small></div><div className="orbit three">🛠️<small>Tools by the day</small></div><div className="bigmark">B</div></div></section>
-      <section className="promise"><article><b>01</b><h3>Rent products</h3><p>Consoles, cameras, computers, and tools from people near you.</p></article><article><b>02</b><h3>Book workspaces</h3><p>Studios, workshops, printing rooms, and small production spaces.</p></article><article><b>03</b><h3>Buy second-hand</h3><p>Useful products at fair prices, with protected BSR payment.</p></article></section>
+  useEffect(() => {
+    if (STATIC_DEMO) { setListings(hubStaticDemo.listings()); return; }
+    fetch(`${API}/v1/demo/listings`).then((response) => response.json()).then(setListings).catch(() => setNotice("Rust API offline — run npm run demo"));
+  }, []);
+  useEffect(() => { loadOrders(); }, [persona]);
+
+  const filtered = useMemo(() => filterMarketplaceListings(listings, { query, listingType:type, categoryId }), [listings, type, query, categoryId]);
+  const scrollTo = (id: string) => requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior:"smooth" })));
+  const showMarket = () => { setView("market"); scrollTo("market"); };
+  const showCategories = () => { setView("market"); scrollTo("categories"); };
+  const selectCategory = (next: CategoryId) => { setCategoryId(next); setView("market"); scrollTo("market"); };
+
+  const requireSession = (action: () => void) => {
+    if (sessionId && sessionId !== "guest") { action(); return; }
+    pendingAction.current = action;
+    setLoginOpen(true);
+  };
+  const selectDemoIdentity = (id: string) => {
+    try { sessionStorage.setItem(demoSessionKey, id); } catch {}
+    setSessionId(id); setPersona(id); setLoginOpen(false); setNotice(`Signed in as ${personas.find((item) => item.id === id)?.name ?? "demo user"}.`);
+    const action = pendingAction.current; pendingAction.current = null; action?.();
+  };
+  const browseAsGuest = () => { try { sessionStorage.setItem(demoSessionKey, "guest"); } catch {} setSessionId("guest"); setLoginOpen(false); pendingAction.current = null; };
+
+  const applyBusinessFilter = (listingType: string, category: CategoryId = "all") => { setView("market"); setType(listingType); setCategoryId(category); scrollTo("market"); };
+  const act = async (order: DemoOrder, action: string) => {
+    if (STATIC_DEMO) {
+      try { hubStaticDemo.act(order.id, action); setNotice(`${actionLabels[action]} — validated by the same order rules as the Rust API.`); await loadOrders(); }
+      catch { setNotice("That action is not allowed in the current state."); }
+      return;
+    }
+    const response = await fetch(`${API}/v1/demo/orders/${order.id}/actions`, { method:"POST", headers:{ "content-type":"application/json" }, body:JSON.stringify({ action }) });
+    if (response.ok) { setNotice(`${actionLabels[action]} — saved by Rust state machine.`); await loadOrders(); }
+    else setNotice("That action is not allowed in the current state.");
+  };
+
+  return <div className="min-h-screen bg-canvas text-ink">
+    <GlobalNav activeView={view} orderCount={orders.length} initials={activePersona.initials} onExplore={() => { setView("market"); window.scrollTo({ top:0, behavior:"smooth" }); }} onCategories={showCategories} onOrders={() => requireSession(() => setView("orders"))} onList={() => requireSession(() => setView("create"))} onAvatar={() => setLoginOpen(true)}/>
+    <div className="mt-[76px] bg-zinc-950 px-5 py-2 text-center text-[11px] font-medium text-white/75"><span className="mr-2 inline-block size-2 rounded-full bg-emerald-300"/>{notice}</div>
+
+    {view === "market" && <main>
+      <HeroSection onExplore={showMarket} onList={() => requireSession(() => setView("create"))}/>
       <CategoryBrowser selected={categoryId} onSelect={selectCategory}/>
-      <section id="market" className="market"><header><div><p className="eyebrow">NEAR BABSON</p><h2>Find what you need</h2></div><div className="filters"><input aria-label="Search listings" placeholder="Search PS5, studio, camera…" value={query} onChange={e=>setQuery(e.target.value)}/><select aria-label="Listing type" value={type} onChange={e=>setType(e.target.value)}><option value="all">All types</option><option value="rental">Rentals</option><option value="workspace">Workspaces</option><option value="sale">Second-hand</option></select></div></header>
-      {categoryId!=="all"&&<p className="filter-note">Showing {filtered.length} result{filtered.length===1?"":"s"} in <strong>{categoryId.replace("-"," ")}</strong></p>}
-      <div className="grid">{filtered.map(l=><article className="card" key={l.id} onClick={()=>openListing(l)}><ListingImage listing={l} showType/><div className="cardbody"><p>{l.category} · {l.condition}</p><h3>{l.title}</h3><div className="location">⌖ {l.city}, {l.state}</div><footer><strong>{money(l.unitPriceCents)}</strong><small>/{l.billingUnit==="thirty_minutes"?"30 min":"day"}</small><button aria-label={`View ${l.title}`}>→</button></footer></div></article>)}</div></section>
-    </>}
-    {view==="orders"&&<section className="panel"><p className="eyebrow">PROTECTED TRANSACTIONS</p><h1>{activePersona.name}&apos;s orders</h1><p className="muted">{STATIC_DEMO ? "This public demo mirrors the Rust order rules in your browser." : "The Rust backend decides every valid action."} Switch between Maya and Jordan to complete the rental together.</p>{orders.length===0?<div className="empty">No orders yet. Rent the PS5 Slim to begin the demo.</div>:<div className="orderlist">{orders.map(o=><article className="order" key={o.id}><div><span className={`badge ${o.state}`}>{o.state.replaceAll("_"," ")}</span><h3>{o.listingTitle}</h3><p>{fulfillmentLabels[o.fulfillment]} · {money(o.quote.totalCents)} total</p></div><div className="timeline">{["pending_payment","paid","confirmed","active","returned","completed"].map(s=><span key={s} className={s===o.state?"current":""}>{s.replace("_"," ")}</span>)}</div><div className="actions">{allowedActions(o.state,persona,o).map(a=><button key={a} className={a==="cancel"?"danger":"primary small"} onClick={()=>act(o,a)}>{actionLabels[a]}</button>)}{o.state==="completed"&&<button className="ghost" onClick={()=>setNotice("Thanks — your five-star demo review was saved.")}>★ Leave review</button>}</div></article>)}</div>}</section>}
-    {view==="create"&&<section className="panel create"><p className="eyebrow">ANY USER CAN EARN</p><h1>List an item or space</h1><div className="formgrid"><label>Listing type<select><option>Rental product</option><option>Second-hand sale</option><option>Workspace</option></select></label><label>Title<input placeholder="What are you offering?"/></label><label>Category<select><option>Gaming</option><option>Computers</option><option>Cameras</option><option>Tools</option><option>Studio</option></select></label><label>Condition<select><option>Like new</option><option>Excellent</option><option>Good</option><option>Fair</option></select></label><label className="wide">Description<textarea placeholder="Describe condition, included accessories, and rules"/></label><label>Price in dollars<input type="number" min="1" placeholder="25"/></label><label>Deposit<input type="number" min="0" placeholder="50"/></label><label>Public city<input placeholder="Wellesley"/></label><label>State<input value="MA" readOnly/></label></div><div className="safety">🔒 Exact addresses stay private. Rust recommends a fair price and limits adjustments to ±$5 per billing unit.</div><button className="primary" onClick={()=>{setNotice("Demo listing saved as a private preview.");setView("market")}}>Save demo listing</button></section>}
-    {selected&&<div className="modalback" onClick={()=>setSelected(null)}><section className="modal" onClick={e=>e.stopPropagation()}><button className="close" onClick={()=>setSelected(null)}>×</button><ListingImage listing={selected} className="modalvisual"/><p className="eyebrow">{selected.category} · {selected.condition}</p><h2>{selected.title}</h2><p>{selected.description}</p><p className="location">⌖ {selected.city}, {selected.state} · exact address protected</p><div className="booking"><label>Billing units<input type="number" min="1" value={units} onChange={e=>{setUnits(Number(e.target.value));setQuote(null)}}/><small>{selected.billingUnit==="thirty_minutes"?"Each unit is 30 minutes":"Each unit is one day"}</small></label><label>How will you use it?<select value={fulfillment} onChange={e=>{setFulfillment(e.target.value as Fulfillment);setQuote(null)}}>{selected.fulfillment.map(f=><option value={f} key={f}>{fulfillmentLabels[f]}</option>)}</select></label></div>{!quote?<button className="primary full" onClick={getQuote}>Get recommended price</button>:<div className="quote"><h3>Protected quote <span>{STATIC_DEMO ? "Browser demo calculation" : "Calculated by Rust"}</span></h3><p><span>Rental price</span><b>{money(quote.baseCents)}</b></p><p><span>BSR service fee (6%)</span><b>{money(quote.serviceFeeCents)}</b></p><p><span>Delivery</span><b>{money(quote.deliveryFeeCents)}</b></p><p><span>Refundable deposit</span><b>{money(quote.depositCents)}</b></p><p className="total"><span>Total held by BSR</span><b>{money(quote.totalCents)}</b></p><button className="primary full" onClick={createOrder}>Reserve with protected payment</button></div>}</section></div>}
-    <ShopAssistant onRent={assistantRent} onList={()=>setView("create")} onWorkspace={assistantWorkspace} onDelivery={assistantDelivery}/>
-    <footer className="sitefoot"><BrandLogo variant="horizontal" className="footer-logo"/><p>Built at Babson · Supporting UN Goals 8 & 10</p><p>Demo data only · No real payments or private addresses</p></footer>
-  </main>;
+      <FeaturedListings listings={filtered} query={query} listingType={type} onQuery={setQuery} onType={setType}/>
+      <BusinessShowcase onRent={() => applyBusinessFilter("rental")} onWorkspace={() => applyBusinessFilter("workspace", "studios")} onSecondHand={() => applyBusinessFilter("sale", "second-hand")}/>
+    </main>}
+
+    {view === "orders" && <main className="mx-auto min-h-[70vh] max-w-[1180px] px-5 py-20 sm:px-8">
+      <p className="text-xs font-extrabold uppercase tracking-[.16em] text-brand">Protected transactions</p><h1 className="mt-3 font-[Manrope] text-5xl font-bold tracking-tight text-zinc-950">{activePersona.name}&apos;s orders</h1><p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-500">{STATIC_DEMO ? "This public demo mirrors the Rust order rules in your browser." : "The Rust backend decides every valid action."} Switch between Maya and Jordan to complete a rental together.</p>
+      {orders.length === 0 ? <div className="mt-10 rounded-card bg-white p-20 text-center text-zinc-500 shadow-soft">No orders yet. Open a listing to begin the protected demo flow.</div> : <div className="mt-10 space-y-5">{orders.map((order) => <article className="rounded-card bg-white p-6 shadow-soft" key={order.id}><div className="flex flex-col gap-5 lg:flex-row lg:items-center"><div className="flex-1"><span className="rounded-full bg-violet-100 px-3 py-1 text-[10px] font-extrabold uppercase text-brand">{order.state.replaceAll("_", " ")}</span><h3 className="mt-3 font-[Manrope] text-xl font-bold">{order.listingTitle}</h3><p className="mt-1 text-sm text-zinc-500">{fulfillmentLabel[order.fulfillment]} · {money(order.quote.totalCents)} total</p></div><div className="flex flex-wrap gap-2">{allowedActions(order.state, persona, order).map((action) => <button key={action} className={action === "cancel" ? "rounded-full bg-red-50 px-4 py-2 text-xs font-bold text-red-700" : "rounded-full bg-brand px-4 py-2 text-xs font-bold text-white"} onClick={() => act(order, action)}>{actionLabels[action]}</button>)}</div></div></article>)}</div>}
+    </main>}
+
+    {view === "create" && <main className="mx-auto min-h-[70vh] max-w-[920px] px-5 py-20 sm:px-8"><p className="text-xs font-extrabold uppercase tracking-[.16em] text-brand">Any user can earn</p><h1 className="mt-3 font-[Manrope] text-5xl font-bold tracking-tight">List an item or space</h1><section className="mt-9 rounded-[24px] bg-white p-6 shadow-soft sm:p-9"><div className="grid gap-5 sm:grid-cols-2"><label className="text-xs font-bold">Listing type<select className="mt-2 w-full rounded-xl bg-zinc-50 p-3 font-normal"><option>Rental product</option><option>Second-hand sale</option><option>Workspace</option></select></label><label className="text-xs font-bold">Title<input className="mt-2 w-full rounded-xl bg-zinc-50 p-3 font-normal" placeholder="What are you offering?"/></label><label className="text-xs font-bold">Category<select className="mt-2 w-full rounded-xl bg-zinc-50 p-3 font-normal"><option>Gaming</option><option>Computers</option><option>Cameras</option><option>Tools</option><option>Studio</option></select></label><label className="text-xs font-bold">Condition<select className="mt-2 w-full rounded-xl bg-zinc-50 p-3 font-normal"><option>Like new</option><option>Excellent</option><option>Good</option><option>Fair</option></select></label><label className="text-xs font-bold sm:col-span-2">Description<textarea className="mt-2 min-h-32 w-full rounded-xl bg-zinc-50 p-3 font-normal" placeholder="Describe condition, included accessories, and rules"/></label><label className="text-xs font-bold">Price in dollars<input type="number" min="1" className="mt-2 w-full rounded-xl bg-zinc-50 p-3 font-normal" placeholder="25"/></label><label className="text-xs font-bold">Refundable deposit<input type="number" min="0" className="mt-2 w-full rounded-xl bg-zinc-50 p-3 font-normal" placeholder="50"/></label></div><div className="mt-6 rounded-xl bg-violet-50 p-4 text-xs leading-5 text-violet-900">Exact addresses stay private. Rust recommends a fair price and limits seller adjustments to ±$5 per billing unit.</div><button className="mt-6 rounded-full bg-gradient-to-r from-brand to-violet-500 px-7 py-3.5 text-sm font-bold text-white" onClick={() => { setNotice("Demo listing saved as a private preview."); setView("market"); }}>Save demo listing</button></section></main>}
+
+    <ShopAssistant onRent={() => applyBusinessFilter("rental")} onList={() => requireSession(() => setView("create"))} onWorkspace={() => applyBusinessFilter("workspace", "studios")} onDelivery={() => applyBusinessFilter("all")}/>
+    <LoginModal open={loginOpen} personas={personas} onSelect={selectDemoIdentity} onGuest={browseAsGuest} onClose={() => setLoginOpen(false)}/>
+    <SiteFooter/>
+  </div>;
 }

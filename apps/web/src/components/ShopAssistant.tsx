@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { assistantActions, buildWorkerHandoff, responseForAction, type AssistantActionId } from "../lib/assistant";
+import { LinearIcon } from "./LinearIcon";
 
 interface ShopAssistantProps {
   onRent: () => void;
@@ -21,19 +22,7 @@ export function ShopAssistant({ onRent, onList, onWorkspace, onDelivery }: ShopA
   const [workerMessage,setWorkerMessage]=useState("");
   const [handoffStatus,setHandoffStatus]=useState("");
   const nextId=useRef(2);
-  const timer=useRef<ReturnType<typeof setTimeout>|null>(null);
   const supportDestination=process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "";
-
-  useEffect(()=>{
-    try {
-      if (sessionStorage.getItem("bsr-assistant-greeted")) return;
-      timer.current=setTimeout(()=>{
-        setOpen(true);
-        sessionStorage.setItem("bsr-assistant-greeted","true");
-      },1600);
-    } catch { timer.current=setTimeout(()=>setOpen(true),1600); }
-    return ()=>{ if(timer.current)clearTimeout(timer.current); };
-  },[]);
 
   useEffect(()=>{
     if(!open)return;
@@ -42,9 +31,8 @@ export function ShopAssistant({ onRent, onList, onWorkspace, onDelivery }: ShopA
     return ()=>document.removeEventListener("keydown",closeOnEscape);
   },[open]);
 
-  const markGreeted=()=>{ try{sessionStorage.setItem("bsr-assistant-greeted","true");}catch{} };
-  const dismiss=()=>{ if(timer.current)clearTimeout(timer.current);markGreeted();setOpen(false); };
-  const launch=()=>{ markGreeted();setOpen(true); };
+  const dismiss=()=>setOpen(false);
+  const launch=()=>setOpen(true);
 
   const choose=(id:AssistantActionId)=>{
     const label=assistantActions.find(action=>action.id===id)?.label ?? id;
@@ -75,7 +63,7 @@ export function ShopAssistant({ onRent, onList, onWorkspace, onDelivery }: ShopA
   };
 
   return <>
-    {!open&&<button className="assistant-launcher" onClick={launch} aria-label="Open BSR shopping assistant"><span>✦</span><b>Need help?</b></button>}
+    {!open&&<button className="support-launcher-icon" onClick={launch} aria-label="Open BSR shopping assistant"><LinearIcon name="support" className="size-5"/></button>}
     {open&&<aside className="assistant-panel" role="dialog" aria-labelledby="assistant-title">
       <header><div><span className="assistant-mark">✦</span><div><h2 id="assistant-title">BSR Assistant</h2><small>Automated help · no sensitive information</small></div></div><button onClick={dismiss} aria-label="Close assistant">×</button></header>
       <div className="assistant-messages" aria-live="polite">
