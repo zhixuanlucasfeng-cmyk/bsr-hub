@@ -13,6 +13,10 @@ export function PerformanceBoot() {
         scope: `${rootPath || ""}/`,
       }).catch(() => undefined);
     };
+    if (document.readyState === "complete") {
+      register();
+      return;
+    }
     window.addEventListener("load", register, { once: true });
     return () => window.removeEventListener("load", register);
   }, []);

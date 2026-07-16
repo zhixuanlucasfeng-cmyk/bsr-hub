@@ -46,7 +46,7 @@ for (const file of [
   "apps/runner/src/components/PerformanceBoot.tsx",
 ]) {
   const source = await readFile(file, "utf8").catch(() => "");
-  for (const marker of ["serviceWorker", "register", "rootPath", "NODE_ENV"]) {
+  for (const marker of ["serviceWorker", "register", "rootPath", "NODE_ENV", 'document.readyState === "complete"']) {
     if (!source.includes(marker)) failures.push(`${file} is missing ${marker}`);
   }
 }
