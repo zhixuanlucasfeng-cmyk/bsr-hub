@@ -46,7 +46,7 @@ impl PostgresOrderRepository {
         {
             return ReserveError::Unavailable;
         }
-        ReserveError::Database(error)
+        ReserveError::database(error)
     }
 }
 

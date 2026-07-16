@@ -3,6 +3,8 @@ use core_api::config::Config;
 fn required() -> Vec<(&'static str, &'static str)> {
     vec![
         ("DATABASE_URL", "postgres://localhost/bsr"),
+        ("MONGODB_URI", "mongodb://localhost:27017/?replicaSet=rs0"),
+        ("MONGODB_DATABASE", "bsr_hub"),
         ("SUPABASE_URL", "https://example.supabase.co"),
         ("SUPABASE_ANON_KEY", "anon-test"),
         ("STRIPE_SECRET_KEY", "sk_test_example"),
@@ -19,6 +21,41 @@ fn defaults_match_the_business_rules() {
     assert_eq!(config.port, 8080);
     assert_eq!(config.service_fee_bps, 600);
     assert_eq!(config.reservation_minutes, 30);
+    assert_eq!(
+        config.mongodb_uri,
+        "mongodb://localhost:27017/?replicaSet=rs0"
+    );
+    assert_eq!(config.mongodb_database, "bsr_hub");
+}
+
+#[test]
+fn mongodb_configuration_is_required() {
+    let mut values = required();
+    values.retain(|(key, _)| *key != "MONGODB_URI");
+    assert_eq!(
+        Config::from_values(values).unwrap_err(),
+        "MONGODB_URI is required"
+    );
+
+    let mut values = required();
+    values.retain(|(key, _)| *key != "MONGODB_DATABASE");
+    assert_eq!(
+        Config::from_values(values).unwrap_err(),
+        "MONGODB_DATABASE is required"
+    );
+}
+
+#[test]
+fn mongodb_database_name_is_validated() {
+    for invalid in ["bad/name", "bad\\name", "bad.name", "bad name", "bad$name"] {
+        let mut values = required();
+        values.retain(|(key, _)| *key != "MONGODB_DATABASE");
+        values.push(("MONGODB_DATABASE", invalid));
+        assert_eq!(
+            Config::from_values(values).unwrap_err(),
+            "MONGODB_DATABASE contains unsupported characters"
+        );
+    }
 }
 
 #[test]

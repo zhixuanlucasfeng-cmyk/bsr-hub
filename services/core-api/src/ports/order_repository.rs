@@ -118,7 +118,13 @@ pub enum ReserveError {
     #[error("pricing profile not found")]
     PricingNotFound,
     #[error("database error")]
-    Database(#[from] sqlx::Error),
+    Database(String),
+}
+
+impl ReserveError {
+    pub fn database(error: impl std::fmt::Display) -> Self {
+        Self::Database(error.to_string())
+    }
 }
 
 #[async_trait]

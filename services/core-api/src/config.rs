@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Config {
     pub port: u16,
     pub service_fee_bps: i64,
     pub reservation_minutes: i64,
     pub database_url: String,
+    pub mongodb_uri: String,
+    pub mongodb_database: String,
     pub supabase_url: String,
     pub supabase_anon_key: String,
     pub stripe_secret_key: String,
@@ -60,11 +62,21 @@ impl Config {
             return Err("STRIPE_SECRET_KEY must be a Stripe test-mode key".into());
         }
 
+        let mongodb_database = required("MONGODB_DATABASE")?;
+        if mongodb_database
+            .chars()
+            .any(|character| matches!(character, '/' | '\\' | '.' | ' ' | '"' | '$' | '\0'))
+        {
+            return Err("MONGODB_DATABASE contains unsupported characters".into());
+        }
+
         Ok(Self {
             port,
             service_fee_bps,
             reservation_minutes,
             database_url: required("DATABASE_URL")?,
+            mongodb_uri: required("MONGODB_URI")?,
+            mongodb_database,
             supabase_url: required("SUPABASE_URL")?,
             supabase_anon_key: required("SUPABASE_ANON_KEY")?,
             stripe_secret_key,

@@ -91,6 +91,7 @@ pub struct Config {
     pub port: u16,
     pub service_fee_bps: i64,
     pub reservation_minutes: i64,
+    pub database_url: String,
     pub mongodb_uri: String,
     pub mongodb_database: String,
     pub supabase_url: String,
@@ -102,6 +103,8 @@ pub struct Config {
     pub allowed_origin: String,
 }
 ```
+
+`database_url` remains as a transitional field while `PostgresOrderRepository` is still compiled; Task 6 removes it together with the PostgreSQL runtime adapter.
 
 Validate the database name before constructing `Config`:
 
