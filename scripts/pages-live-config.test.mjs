@@ -6,6 +6,14 @@ const workflow = await readFile(
   new URL("../.github/workflows/pages.yml", import.meta.url),
   "utf8",
 );
+const marketplacePage = await readFile(
+  new URL("../apps/web/src/app/page.tsx", import.meta.url),
+  "utf8",
+);
+const bookingCard = await readFile(
+  new URL("../apps/web/src/components/BookingCard.tsx", import.meta.url),
+  "utf8",
+);
 
 assert.match(
   buildScript,
@@ -33,6 +41,14 @@ for (const secret of [
     workflow,
     new RegExp(`${secret}: \\$\\{\\{ secrets\\.${secret} \\}\\}`),
     `GitHub Pages workflow must expose ${secret}`,
+  );
+}
+
+for (const source of [marketplacePage, bookingCard]) {
+  assert.match(
+    source,
+    /NEXT_PUBLIC_API_BASE_URL\s*\?\?\s*process\.env\.NEXT_PUBLIC_API_URL/,
+    "Every live marketplace API call must prefer NEXT_PUBLIC_API_BASE_URL",
   );
 }
 

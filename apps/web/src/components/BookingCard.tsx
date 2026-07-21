@@ -8,7 +8,10 @@ import { hubStaticDemo } from "../lib/static-demo";
 import { LinearIcon } from "./LinearIcon";
 import { useAuth } from "./AuthProvider";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API =
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  "http://localhost:8080";
 const STATIC_DEMO = process.env.NEXT_PUBLIC_STATIC_DEMO === "true";
 
 interface BookingCardProps { listing: Listing; onProtectedAction: (action: () => void) => void }

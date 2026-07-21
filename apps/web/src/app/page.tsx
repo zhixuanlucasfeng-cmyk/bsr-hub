@@ -17,7 +17,10 @@ import { demoSessionKey, fulfillmentLabel } from "../lib/marketplace";
 import { hubStaticDemo } from "../lib/static-demo";
 import { allowedActions, money, personas, type DemoOrder, type Listing } from "../lib/types";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API =
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  "http://localhost:8080";
 const STATIC_DEMO = process.env.NEXT_PUBLIC_STATIC_DEMO === "true";
 const actionLabels: Record<string, string> = { mark_paid:"Complete protected payment", confirm:"Seller confirms", activate:"Start rental", fulfill:"Mark fulfilled", return:"Return item", complete:"Complete order", cancel:"Cancel" };
 type View = "market" | "orders" | "create";
