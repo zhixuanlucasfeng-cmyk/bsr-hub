@@ -5,7 +5,19 @@ export type AuthConfig = {
   staticDemo: boolean;
 };
 
-export function getAuthConfig(env: NodeJS.ProcessEnv = process.env): AuthConfig {
+// Next.js only inlines NEXT_PUBLIC_* values when they are referenced directly.
+// Keep this object explicit so the browser bundle receives the deployment config.
+const publicEnv = {
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
+  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  NEXT_PUBLIC_STATIC_DEMO: process.env.NEXT_PUBLIC_STATIC_DEMO,
+};
+
+export function getAuthConfig(
+  env: Partial<NodeJS.ProcessEnv> = publicEnv,
+): AuthConfig {
   return {
     supabaseUrl: env.NEXT_PUBLIC_SUPABASE_URL ?? "",
     supabaseAnonKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",

@@ -14,6 +14,10 @@ const bookingCard = await readFile(
   new URL("../apps/web/src/components/BookingCard.tsx", import.meta.url),
   "utf8",
 );
+const authConfig = await readFile(
+  new URL("../apps/web/src/lib/auth-config.ts", import.meta.url),
+  "utf8",
+);
 
 assert.match(
   buildScript,
@@ -49,6 +53,19 @@ for (const source of [marketplacePage, bookingCard]) {
     source,
     /NEXT_PUBLIC_API_BASE_URL\s*\?\?\s*process\.env\.NEXT_PUBLIC_API_URL/,
     "Every live marketplace API call must prefer NEXT_PUBLIC_API_BASE_URL",
+  );
+}
+
+for (const variable of [
+  "NEXT_PUBLIC_SUPABASE_URL",
+  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  "NEXT_PUBLIC_API_BASE_URL",
+  "NEXT_PUBLIC_STATIC_DEMO",
+]) {
+  assert.match(
+    authConfig,
+    new RegExp(`publicEnv[\\s\\S]*process\\.env\\.${variable}`),
+    `${variable} must be read directly so Next.js can inline it in browser code`,
   );
 }
 
