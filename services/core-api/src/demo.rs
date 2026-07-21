@@ -34,6 +34,8 @@ pub struct DemoListing {
     pub fulfillment: Vec<FulfillmentMethod>,
     pub accent: &'static str,
     pub icon: &'static str,
+    pub image_src: &'static str,
+    pub image_alt: &'static str,
 }
 
 #[derive(Clone, Serialize)]
@@ -208,6 +210,8 @@ pub fn listings() -> Vec<DemoListing> {
             fulfillment: vec![Pickup, Delivery, OwnerLocation],
             accent: "#6d5dfc",
             icon: "🎮",
+            image_src: "/images/listings/ps5-slim.jpg",
+            image_alt: "White PlayStation 5 console with two controllers",
         },
         DemoListing {
             id: "ps5-pro",
@@ -226,6 +230,8 @@ pub fn listings() -> Vec<DemoListing> {
             fulfillment: vec![Pickup, Delivery],
             accent: "#8b5cf6",
             icon: "🕹️",
+            image_src: "/images/listings/ps5-pro.jpg",
+            image_alt: "Gaming console, controller, and streaming headset setup",
         },
         DemoListing {
             id: "macbook",
@@ -244,6 +250,8 @@ pub fn listings() -> Vec<DemoListing> {
             fulfillment: vec![Pickup, Delivery],
             accent: "#0ea5e9",
             icon: "💻",
+            image_src: "/images/listings/macbook.jpg",
+            image_alt: "Open MacBook Pro laptop on a clean desk",
         },
         DemoListing {
             id: "gaming-pc",
@@ -262,6 +270,8 @@ pub fn listings() -> Vec<DemoListing> {
             fulfillment: vec![Delivery, OwnerLocation],
             accent: "#06b6d4",
             icon: "🖥️",
+            image_src: "/images/listings/gaming-pc.jpg",
+            image_alt: "RGB desktop computer and monitor gaming setup",
         },
         DemoListing {
             id: "sony-camera",
@@ -280,6 +290,8 @@ pub fn listings() -> Vec<DemoListing> {
             fulfillment: vec![Pickup, Delivery],
             accent: "#f97316",
             icon: "📷",
+            image_src: "/images/listings/sony-camera.jpg",
+            image_alt: "Mirrorless camera with lens and creator accessories",
         },
         DemoListing {
             id: "podcast-kit",
@@ -298,6 +310,8 @@ pub fn listings() -> Vec<DemoListing> {
             fulfillment: vec![Pickup, Delivery],
             accent: "#fb7185",
             icon: "🎙️",
+            image_src: "/images/listings/podcast-kit.jpg",
+            image_alt: "Two microphones and headphones arranged for a podcast",
         },
         DemoListing {
             id: "tool-set",
@@ -316,6 +330,8 @@ pub fn listings() -> Vec<DemoListing> {
             fulfillment: vec![Pickup, Delivery],
             accent: "#f59e0b",
             icon: "🛠️",
+            image_src: "/images/listings/tool-set.jpg",
+            image_alt: "Cordless drill and home project tools on a workbench",
         },
         DemoListing {
             id: "laser-cutter",
@@ -334,6 +350,8 @@ pub fn listings() -> Vec<DemoListing> {
             fulfillment: vec![OnSite],
             accent: "#eab308",
             icon: "⚙️",
+            image_src: "/images/listings/laser-cutter.jpg",
+            image_alt: "Laser cutting machine in a supervised maker workshop",
         },
         DemoListing {
             id: "photo-studio",
@@ -352,6 +370,8 @@ pub fn listings() -> Vec<DemoListing> {
             fulfillment: vec![OnSite],
             accent: "#ec4899",
             icon: "🎬",
+            image_src: "/images/listings/photo-studio.jpg",
+            image_alt: "Bright photography studio with lights and backdrop",
         },
         DemoListing {
             id: "print-shop",
@@ -370,6 +390,8 @@ pub fn listings() -> Vec<DemoListing> {
             fulfillment: vec![OnSite],
             accent: "#14b8a6",
             icon: "🖨️",
+            image_src: "/images/listings/print-shop.jpg",
+            image_alt: "Small print workshop with presses and worktables",
         },
         DemoListing {
             id: "monitor-sale",
@@ -388,6 +410,8 @@ pub fn listings() -> Vec<DemoListing> {
             fulfillment: vec![Pickup, Delivery],
             accent: "#3b82f6",
             icon: "🖥️",
+            image_src: "/images/listings/monitor-sale.jpg",
+            image_alt: "Twenty-seven inch monitor on a desktop",
         },
         DemoListing {
             id: "camera-sale",
@@ -406,6 +430,8 @@ pub fn listings() -> Vec<DemoListing> {
             fulfillment: vec![Pickup, Delivery],
             accent: "#a855f7",
             icon: "📸",
+            image_src: "/images/listings/camera-sale.jpg",
+            image_alt: "Second-hand instant camera with film pack",
         },
     ]
 }
