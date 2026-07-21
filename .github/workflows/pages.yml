@@ -24,7 +24,13 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run pages:build
+      - name: Build GitHub Pages
+        run: npm run pages:build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+          NEXT_PUBLIC_STATIC_DEMO: ${{ secrets.NEXT_PUBLIC_STATIC_DEMO }}
       - uses: actions/configure-pages@v5
         with:
           enablement: true

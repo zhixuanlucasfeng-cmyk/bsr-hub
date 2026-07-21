@@ -6,7 +6,11 @@ cd "$root_dir"
 
 rm -rf dist-pages apps/web/out apps/runner/out
 
-NEXT_PUBLIC_STATIC_DEMO=true NEXT_PUBLIC_BASE_PATH=/bsr-hub/hub npm run build -w @bsr-hub/web
+hub_static_demo="${NEXT_PUBLIC_STATIC_DEMO:-true}"
+
+NEXT_PUBLIC_STATIC_DEMO="$hub_static_demo" \
+NEXT_PUBLIC_BASE_PATH=/bsr-hub/hub \
+npm run build -w @bsr-hub/web
 NEXT_PUBLIC_STATIC_DEMO=true NEXT_PUBLIC_BASE_PATH=/bsr-hub/runner npm run build -w @bsr-hub/runner
 
 mkdir -p dist-pages/hub dist-pages/runner
