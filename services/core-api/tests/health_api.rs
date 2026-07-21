@@ -9,10 +9,15 @@ use core_api::{
     ports::{
         order_repository::{CreateOrder, OrderRepository, ReserveError, ReservedOrder},
         payment_gateway::{CheckoutRequest, CheckoutSession, PaymentError, PaymentGateway},
+        profile_repository::{
+            ProfileError, ProfilePatch, ProfileRepository, ProfileRole, UserProfile,
+        },
     },
 };
 use http_body_util::BodyExt;
+use time::OffsetDateTime;
 use tower::ServiceExt;
+use uuid::Uuid;
 
 #[tokio::test]
 async fn health_returns_ok_json() {
@@ -70,9 +75,44 @@ impl AuthVerifier for NoopAuth {
     }
 }
 
+struct NoopProfiles;
+
+#[async_trait]
+impl ProfileRepository for NoopProfiles {
+    async fn bootstrap(&self, auth_user_id: Uuid) -> Result<UserProfile, ProfileError> {
+        Ok(test_profile(auth_user_id))
+    }
+
+    async fn get_by_auth_user_id(&self, auth_user_id: Uuid) -> Result<UserProfile, ProfileError> {
+        Ok(test_profile(auth_user_id))
+    }
+
+    async fn update(
+        &self,
+        auth_user_id: Uuid,
+        _patch: ProfilePatch,
+    ) -> Result<UserProfile, ProfileError> {
+        Ok(test_profile(auth_user_id))
+    }
+}
+
+fn test_profile(auth_user_id: Uuid) -> UserProfile {
+    UserProfile {
+        id: Uuid::parse_str("22222222-2222-2222-2222-222222222222").unwrap(),
+        auth_user_id,
+        display_name: "Test member".to_owned(),
+        avatar_url: None,
+        role: ProfileRole::Buyer,
+        trust_level: 1,
+        created_at: OffsetDateTime::UNIX_EPOCH,
+        updated_at: OffsetDateTime::UNIX_EPOCH,
+    }
+}
+
 fn state(ready: bool) -> AppState {
     AppState {
         orders: Arc::new(ReadinessOrders(ready)),
+        profiles: Arc::new(NoopProfiles),
         payments: Arc::new(NoopPayments),
         auth: Arc::new(NoopAuth),
         stripe_webhook_secret: Arc::from("whsec_test"),

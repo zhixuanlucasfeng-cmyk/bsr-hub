@@ -34,8 +34,10 @@ async fn main() {
     )
     .await
     .expect("connect to MongoDB and bootstrap collections");
+    let profiles = orders.profile_repository();
     let state = AppState {
         orders: Arc::new(orders),
+        profiles: Arc::new(profiles),
         payments: Arc::new(StripePaymentGateway::new(
             config.stripe_secret_key,
             config.web_success_url,

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AuthProvider } from "../components/AuthProvider";
 import { PerformanceBoot } from "../components/PerformanceBoot";
 import "./globals.css";
 
@@ -21,7 +22,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           fetchPriority="high"
         />
       </head>
-      <body><PerformanceBoot/>{children}</body>
+      <body>
+        <AuthProvider>
+          <PerformanceBoot/>
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   );
 }

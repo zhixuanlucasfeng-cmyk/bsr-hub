@@ -12,11 +12,15 @@ use std::sync::Arc;
 
 use auth::AuthVerifier;
 use axum::Router;
-use ports::{order_repository::OrderRepository, payment_gateway::PaymentGateway};
+use ports::{
+    order_repository::OrderRepository, payment_gateway::PaymentGateway,
+    profile_repository::ProfileRepository,
+};
 
 #[derive(Clone)]
 pub struct AppState {
     pub orders: Arc<dyn OrderRepository>,
+    pub profiles: Arc<dyn ProfileRepository>,
     pub payments: Arc<dyn PaymentGateway>,
     pub auth: Arc<dyn AuthVerifier>,
     pub stripe_webhook_secret: Arc<str>,

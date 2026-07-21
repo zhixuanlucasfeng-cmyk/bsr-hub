@@ -6,6 +6,7 @@ import { money } from "../lib/types";
 import { fulfillmentLabel, listingPriceLabel } from "../lib/marketplace";
 import { hubStaticDemo } from "../lib/static-demo";
 import { LinearIcon } from "./LinearIcon";
+import { useAuth } from "./AuthProvider";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 const STATIC_DEMO = process.env.NEXT_PUBLIC_STATIC_DEMO === "true";
@@ -13,6 +14,7 @@ const STATIC_DEMO = process.env.NEXT_PUBLIC_STATIC_DEMO === "true";
 interface BookingCardProps { listing: Listing; onProtectedAction: (action: () => void) => void }
 
 export function BookingCard({ listing, onProtectedAction }: BookingCardProps) {
+  const { configured: realAuthConfigured, user: realUser, apiOnline } = useAuth();
   const [units, setUnits] = useState(listing.listingType === "sale" ? 1 : listing.billingUnit === "thirty_minutes" ? 2 : 1);
   const [fulfillment, setFulfillment] = useState<Fulfillment>(listing.fulfillment[0]);
   const [quote, setQuote] = useState<Quote | null>(null);
@@ -35,6 +37,18 @@ export function BookingCard({ listing, onProtectedAction }: BookingCardProps) {
 
   const complete = () => onProtectedAction(async () => {
     if (!quote) { await getQuote(); return; }
+    if (realAuthConfigured) {
+      if (!realUser) {
+        setStatus("Please sign in before booking this item.");
+        return;
+      }
+      if (!apiOnline) {
+        setStatus("Online checkout is not connected in this classroom demo. You can still explore pricing and product details.");
+        return;
+      }
+      setStatus("Your account is real. This demo listing still needs a production UUID before Rust can create a protected checkout.");
+      return;
+    }
     setBusy(true);
     try {
       if (STATIC_DEMO) hubStaticDemo.createOrder(listing.id, units, fulfillment);

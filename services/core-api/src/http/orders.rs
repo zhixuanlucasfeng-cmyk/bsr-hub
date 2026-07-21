@@ -32,17 +32,7 @@ pub async fn create(
     headers: HeaderMap,
     Json(request): Json<QuoteRequest>,
 ) -> Result<(StatusCode, Json<CreateOrderResponse>), ApiError> {
-    let token = headers
-        .get(axum::http::header::AUTHORIZATION)
-        .and_then(|value| value.to_str().ok())
-        .and_then(|value| value.strip_prefix("Bearer "))
-        .filter(|value| !value.is_empty())
-        .ok_or_else(ApiError::auth_required)?;
-    let user = state
-        .auth
-        .verify(token)
-        .await
-        .map_err(|_| ApiError::auth_required())?;
+    let user = super::auth_extract::require_auth(&state, &headers).await?;
     let listing_id = request.listing_id;
     let fulfillment = request.fulfillment;
     let prepared = prepare_quote(&state, request).await?;
@@ -102,17 +92,7 @@ pub async fn transition(
     headers: HeaderMap,
     Json(request): Json<TransitionRequest>,
 ) -> Result<Json<TransitionResponse>, ApiError> {
-    let token = headers
-        .get(axum::http::header::AUTHORIZATION)
-        .and_then(|value| value.to_str().ok())
-        .and_then(|value| value.strip_prefix("Bearer "))
-        .filter(|value| !value.is_empty())
-        .ok_or_else(ApiError::auth_required)?;
-    let user = state
-        .auth
-        .verify(token)
-        .await
-        .map_err(|_| ApiError::auth_required())?;
+    let user = super::auth_extract::require_auth(&state, &headers).await?;
     let status = state
         .orders
         .transition(order_id, user.user_id, request.action)

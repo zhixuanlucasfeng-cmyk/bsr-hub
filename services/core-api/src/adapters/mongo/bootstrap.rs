@@ -14,6 +14,7 @@ const COLLECTIONS: &[&str] = &[
     "orders",
     "booking_slots",
     "order_events",
+    "user_profiles",
 ];
 
 pub async fn bootstrap(database: &Database) -> Result<(), MongoAdapterError> {
@@ -72,6 +73,14 @@ pub async fn bootstrap(database: &Database) -> Result<(), MongoAdapterError> {
                 )
                 .build(),
         ])
+        .await?;
+    database
+        .collection::<Document>("user_profiles")
+        .create_index(index(
+            doc! { "auth_user_id": 1 },
+            "user_profile_auth_user_unique",
+            true,
+        ))
         .await?;
 
     apply_validators(database).await?;
@@ -183,6 +192,32 @@ async fn apply_validators(database: &Database) -> Result<(), MongoAdapterError> 
                     "order_id": { "bsonType": "string" },
                     "event_type": { "bsonType": "string" },
                     "created_at": { "bsonType": "date" },
+                    "schema_version": { "bsonType": "int", "minimum": 1 },
+                },
+            ),
+        ),
+        (
+            "user_profiles",
+            json_schema(
+                &[
+                    "_id",
+                    "auth_user_id",
+                    "display_name",
+                    "role",
+                    "trust_level",
+                    "created_at",
+                    "updated_at",
+                    "schema_version",
+                ],
+                doc! {
+                    "_id": { "bsonType": "string" },
+                    "auth_user_id": { "bsonType": "string" },
+                    "display_name": { "bsonType": "string", "minLength": 1, "maxLength": 80 },
+                    "avatar_url": { "bsonType": ["string", "null"] },
+                    "role": { "enum": ["buyer", "seller", "runner", "admin"] },
+                    "trust_level": { "bsonType": "int", "minimum": 0 },
+                    "created_at": { "bsonType": "date" },
+                    "updated_at": { "bsonType": "date" },
                     "schema_version": { "bsonType": "int", "minimum": 1 },
                 },
             ),
