@@ -14,6 +14,7 @@
     "mongo:reset": "docker compose -f compose.mongodb.yml down -v",
     "mongo:bootstrap": "cargo run -p core-api --bin mongo_bootstrap",
     "mongo:check": "bash scripts/check-mongodb.sh",
+    "check:deploy": "node scripts/check-production-deploy.mjs",
     "images:optimize": "node scripts/optimize-images.mjs",
     "dev": "npm run dev -w @bsr-hub/web",
     "demo": "bash scripts/demo.sh",
@@ -28,7 +29,7 @@
     "pages:build": "bash scripts/build-pages.sh",
     "pages:check": "npm run check:web && npm run runner:check && npm run pages:build",
     "check:rust": "cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace",
-    "check": "npm run check:rust && npm run check:web && npm run runner:check"
+    "check": "npm run check:deploy && npm run check:rust && npm run check:web && npm run runner:check"
   },
   "devDependencies": {
     "postcss": "^8.5.10",

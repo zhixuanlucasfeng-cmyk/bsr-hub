@@ -53,7 +53,7 @@ async fn main() {
         .expect("ALLOWED_ORIGIN must be a valid origin");
     let cors = CorsLayer::new()
         .allow_origin(allowed_origin)
-        .allow_methods([Method::GET, Method::POST])
+        .allow_methods([Method::GET, Method::POST, Method::PUT])
         .allow_headers([header::AUTHORIZATION, header::CONTENT_TYPE]);
     let application = core_api::app_with_state(state).layer(cors);
     let listener = tokio::net::TcpListener::bind(("0.0.0.0", config.port))
