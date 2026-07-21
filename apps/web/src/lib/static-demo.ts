@@ -15,6 +15,21 @@ export const demoCatalog: Listing[] = [
   { id:"camera-sale", ownerId:"creator-demo", title:"Second-Hand Instant Camera", listingType:"sale", category:"Second-hand", description:"Tested instant camera with case and one unopened film pack.", city:"Wellesley", state:"MA", condition:"Good", unitPriceCents:6500, depositCents:0, deliveryFeeCents:700, billingUnit:"day", fulfillment:["pickup","delivery"], accent:"#a855f7", icon:"📸", imageSrc:"/images/listings/camera-sale.jpg", imageAlt:"Second-hand instant camera with film pack" },
 ];
 
+type DemoListingWithoutMedia = Omit<Listing, "imageSrc" | "imageAlt"> &
+  Partial<Pick<Listing, "imageSrc" | "imageAlt">>;
+
+export function attachDemoListingMedia(listings: DemoListingWithoutMedia[]): Listing[] {
+  const fallback = demoCatalog[0];
+  return listings.map((listing) => {
+    const local = demoCatalog.find((item) => item.id === listing.id) ?? fallback;
+    return {
+      ...listing,
+      imageSrc: listing.imageSrc ?? local.imageSrc,
+      imageAlt: listing.imageAlt ?? local.imageAlt,
+    };
+  });
+}
+
 const transitions: Partial<Record<OrderState, Record<string, OrderState>>> = {
   pending_payment: { mark_paid:"paid", cancel:"cancelled", expire:"expired" },
   paid: { confirm:"confirmed", cancel:"cancelled" },

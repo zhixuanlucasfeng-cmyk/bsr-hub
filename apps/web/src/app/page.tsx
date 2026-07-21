@@ -14,7 +14,7 @@ import { useAuth } from "../components/AuthProvider";
 import { filterMarketplaceListings, type CategoryId } from "../lib/categories";
 import { readMarketplaceEntry } from "../lib/entry-route";
 import { demoSessionKey, fulfillmentLabel } from "../lib/marketplace";
-import { hubStaticDemo } from "../lib/static-demo";
+import { attachDemoListingMedia, hubStaticDemo } from "../lib/static-demo";
 import { allowedActions, money, personas, type DemoOrder, type Listing } from "../lib/types";
 
 const API =
@@ -67,7 +67,10 @@ export default function Home() {
 
   useEffect(() => {
     if (STATIC_DEMO) { setListings(hubStaticDemo.listings()); return; }
-    fetch(`${API}/v1/demo/listings`).then((response) => response.json()).then(setListings).catch(() => setNotice("Rust API offline — run npm run demo"));
+    fetch(`${API}/v1/demo/listings`)
+      .then((response) => response.json())
+      .then((remoteListings) => setListings(attachDemoListingMedia(remoteListings)))
+      .catch(() => setNotice("Rust API offline — run npm run demo"));
   }, []);
   useEffect(() => { loadOrders(); }, [persona]);
 
