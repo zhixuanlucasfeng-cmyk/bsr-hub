@@ -10,6 +10,14 @@ BSR Hub is a U.S. peer-to-peer marketplace for buying, selling, renting products
 
 The public GitHub Pages versions use fictional in-browser demo data, so teammates can test the full journeys without installing Rust or running a server. The repository still contains the Rust/Axum implementation used for local development and verification. No real payment, address, identity, or employment data is collected.
 
+### Real account demo
+
+BSR Hub now has a real-account foundation for the public demo. Guest mode still uses fictional listings and browser-only state. Real-account mode uses Supabase Auth for sign up/login, the Rust API for token verification, and MongoDB for BSR Hub user profiles and marketplace records.
+
+To turn on real accounts, set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_API_BASE_URL`, and `NEXT_PUBLIC_STATIC_DEMO=false` for the web app. The Rust API must also have `MONGODB_URI`, `MONGODB_DATABASE`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `WEB_SUCCESS_URL`, `WEB_CANCEL_URL`, and `ALLOWED_ORIGIN`.
+
+Important: the classroom demo must not collect real payment, identity, or private address data. Supabase stores passwords; MongoDB stores only BSR Hub profile and marketplace data.
+
 ## Run the complete classroom demo
 
 Requirements: Node.js 22+, npm, and stable Rust. No database, Stripe key, Supabase account, Docker, or real payment information is required.

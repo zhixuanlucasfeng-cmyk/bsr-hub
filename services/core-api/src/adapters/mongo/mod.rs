@@ -1,5 +1,6 @@
 pub mod bootstrap;
 pub mod models;
+pub mod profiles;
 pub mod seed;
 pub mod slots;
 
@@ -31,7 +32,7 @@ use crate::{
 
 use models::{
     BookingSlotDocument, ListingDocument, OrderDocument, OrderEventDocument,
-    PricingProfileDocument, QuoteDocument,
+    PricingProfileDocument, QuoteDocument, UserProfileDocument,
 };
 
 const MAX_TRANSACTION_ATTEMPTS: u32 = 8;
@@ -51,6 +52,7 @@ pub struct MongoCollections {
     pub orders: Collection<OrderDocument>,
     pub booking_slots: Collection<BookingSlotDocument>,
     pub order_events: Collection<OrderEventDocument>,
+    pub user_profiles: Collection<UserProfileDocument>,
 }
 
 impl MongoCollections {
@@ -61,6 +63,7 @@ impl MongoCollections {
             orders: database.collection("orders"),
             booking_slots: database.collection("booking_slots"),
             order_events: database.collection("order_events"),
+            user_profiles: database.collection("user_profiles"),
         }
     }
 }
@@ -96,6 +99,10 @@ impl MongoOrderRepository {
 
     pub fn database(&self) -> &Database {
         &self.database
+    }
+
+    pub fn profile_repository(&self) -> profiles::MongoProfileRepository {
+        profiles::MongoProfileRepository::new(self.collections.user_profiles.clone())
     }
 
     async fn reserve_once(&self, order: &CreateOrder) -> Result<ReservedOrder, TransactionError> {

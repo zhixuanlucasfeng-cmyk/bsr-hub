@@ -102,3 +102,17 @@ pub struct OrderEventDocument {
     pub created_at: DateTime,
     pub schema_version: i32,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UserProfileDocument {
+    #[serde(rename = "_id")]
+    pub id: String,
+    pub auth_user_id: String,
+    pub display_name: String,
+    pub avatar_url: Option<String>,
+    pub role: String,
+    pub trust_level: i32,
+    pub created_at: DateTime,
+    pub updated_at: DateTime,
+    pub schema_version: i32,
+}

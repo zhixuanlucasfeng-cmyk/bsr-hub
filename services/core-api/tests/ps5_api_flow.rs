@@ -12,9 +12,13 @@ use core_api::{
     ports::{
         order_repository::{CreateOrder, OrderRepository, ReserveError, ReservedOrder},
         payment_gateway::{CheckoutRequest, CheckoutSession, PaymentError, PaymentGateway},
+        profile_repository::{
+            ProfileError, ProfilePatch, ProfileRepository, ProfileRole, UserProfile,
+        },
     },
 };
 use http_body_util::BodyExt;
+use time::OffsetDateTime;
 use tower::ServiceExt;
 use uuid::Uuid;
 
@@ -83,9 +87,44 @@ impl AuthVerifier for FakeAuth {
     }
 }
 
+struct FakeProfiles;
+
+#[async_trait]
+impl ProfileRepository for FakeProfiles {
+    async fn bootstrap(&self, auth_user_id: Uuid) -> Result<UserProfile, ProfileError> {
+        Ok(test_profile(auth_user_id))
+    }
+
+    async fn get_by_auth_user_id(&self, auth_user_id: Uuid) -> Result<UserProfile, ProfileError> {
+        Ok(test_profile(auth_user_id))
+    }
+
+    async fn update(
+        &self,
+        auth_user_id: Uuid,
+        _patch: ProfilePatch,
+    ) -> Result<UserProfile, ProfileError> {
+        Ok(test_profile(auth_user_id))
+    }
+}
+
+fn test_profile(auth_user_id: Uuid) -> UserProfile {
+    UserProfile {
+        id: Uuid::parse_str("22222222-2222-2222-2222-222222222222").unwrap(),
+        auth_user_id,
+        display_name: "Test member".to_owned(),
+        avatar_url: None,
+        role: ProfileRole::Buyer,
+        trust_level: 1,
+        created_at: OffsetDateTime::UNIX_EPOCH,
+        updated_at: OffsetDateTime::UNIX_EPOCH,
+    }
+}
+
 fn app() -> axum::Router {
     core_api::app_with_state(AppState {
         orders: Arc::new(FakeOrders::default()),
+        profiles: Arc::new(FakeProfiles),
         payments: Arc::new(FakePayments),
         auth: Arc::new(FakeAuth),
         stripe_webhook_secret: Arc::from("whsec_test"),

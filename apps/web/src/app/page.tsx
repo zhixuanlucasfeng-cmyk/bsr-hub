@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BusinessShowcase } from "../components/BusinessShowcase";
+import { AuthModal } from "../components/AuthModal";
 import { CategoryBrowser } from "../components/CategoryBrowser";
 import { FeaturedListings } from "../components/FeaturedListings";
 import { GlobalNav } from "../components/GlobalNav";
@@ -9,6 +10,7 @@ import { HeroSection } from "../components/HeroSection";
 import { LoginModal } from "../components/LoginModal";
 import { ShopAssistant } from "../components/ShopAssistant";
 import { SiteFooter } from "../components/SiteFooter";
+import { useAuth } from "../components/AuthProvider";
 import { filterMarketplaceListings, type CategoryId } from "../lib/categories";
 import { readMarketplaceEntry } from "../lib/entry-route";
 import { demoSessionKey, fulfillmentLabel } from "../lib/marketplace";
@@ -21,6 +23,7 @@ const actionLabels: Record<string, string> = { mark_paid:"Complete protected pay
 type View = "market" | "orders" | "create";
 
 export default function Home() {
+  const { configured: realAuthConfigured, loading: authLoading, user: realUser, profile: realProfile, apiOnline } = useAuth();
   const [listings, setListings] = useState<Listing[]>([]);
   const [orders, setOrders] = useState<DemoOrder[]>([]);
   const [persona, setPersona] = useState("buyer-demo");
@@ -30,9 +33,13 @@ export default function Home() {
   const [view, setView] = useState<View>("market");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
   const [notice, setNotice] = useState(STATIC_DEMO ? "Public demo mode — no real payments" : "Rust API connected");
   const pendingAction = useRef<null | (() => void)>(null);
   const activePersona = personas.find((item) => item.id === persona) ?? personas[0];
+  const accountInitials = realUser
+    ? (realProfile?.displayName ?? realUser.email ?? "BSR").slice(0, 2).toUpperCase()
+    : activePersona.initials;
 
   const loadOrders = async (id = persona) => {
     if (STATIC_DEMO) { setOrders(hubStaticDemo.ordersFor(id)); return; }
@@ -67,7 +74,21 @@ export default function Home() {
   const showCategories = () => { setView("market"); scrollTo("categories"); };
   const selectCategory = (next: CategoryId) => { setCategoryId(next); setView("market"); scrollTo("market"); };
 
+  useEffect(() => {
+    if (!realAuthConfigured) return;
+    if (authLoading) setNotice("Checking secure account session...");
+    else if (realUser && apiOnline) setNotice(`Signed in with real demo account${realProfile?.displayName ? `: ${realProfile.displayName}` : ""}.`);
+    else if (realUser && !apiOnline) setNotice("Signed in, but the Rust API is not connected for online profile storage.");
+    else setNotice("Explore as guest, or sign in to test real account flows.");
+  }, [realAuthConfigured, authLoading, realUser, realProfile, apiOnline]);
+
   const requireSession = (action: () => void) => {
+    if (realAuthConfigured) {
+      if (realUser) { action(); return; }
+      pendingAction.current = action;
+      setAuthOpen(true);
+      return;
+    }
     if (sessionId && sessionId !== "guest") { action(); return; }
     pendingAction.current = action;
     setLoginOpen(true);
@@ -78,6 +99,8 @@ export default function Home() {
     const action = pendingAction.current; pendingAction.current = null; action?.();
   };
   const browseAsGuest = () => { try { sessionStorage.setItem(demoSessionKey, "guest"); } catch {} setSessionId("guest"); setLoginOpen(false); pendingAction.current = null; };
+  const openAccount = () => realAuthConfigured ? setAuthOpen(true) : setLoginOpen(true);
+  const openDemoIdentity = () => { setAuthOpen(false); setLoginOpen(true); };
 
   const applyBusinessFilter = (listingType: string, category: CategoryId = "all") => { setView("market"); setType(listingType); setCategoryId(category); scrollTo("market"); };
   const act = async (order: DemoOrder, action: string) => {
@@ -92,7 +115,7 @@ export default function Home() {
   };
 
   return <div className="min-h-screen bg-canvas text-ink">
-    <GlobalNav activeView={view} orderCount={orders.length} initials={activePersona.initials} onExplore={() => { setView("market"); window.scrollTo({ top:0, behavior:"smooth" }); }} onCategories={showCategories} onOrders={() => requireSession(() => setView("orders"))} onList={() => requireSession(() => setView("create"))} onAvatar={() => setLoginOpen(true)}/>
+    <GlobalNav activeView={view} orderCount={orders.length} initials={accountInitials} onExplore={() => { setView("market"); window.scrollTo({ top:0, behavior:"smooth" }); }} onCategories={showCategories} onOrders={() => requireSession(() => setView("orders"))} onList={() => requireSession(() => setView("create"))} onAvatar={openAccount}/>
     <div className="mt-[76px] bg-zinc-950 px-5 py-2 text-center text-[11px] font-medium text-white/75"><span className="mr-2 inline-block size-2 rounded-full bg-emerald-300"/>{notice}</div>
 
     {view === "market" && <main>
@@ -107,9 +130,10 @@ export default function Home() {
       {orders.length === 0 ? <div className="mt-10 rounded-card bg-white p-20 text-center text-zinc-500 shadow-soft">No orders yet. Open a listing to begin the protected demo flow.</div> : <div className="mt-10 space-y-5">{orders.map((order) => <article className="rounded-card bg-white p-6 shadow-soft" key={order.id}><div className="flex flex-col gap-5 lg:flex-row lg:items-center"><div className="flex-1"><span className="rounded-full bg-violet-100 px-3 py-1 text-[10px] font-extrabold uppercase text-brand">{order.state.replaceAll("_", " ")}</span><h3 className="mt-3 font-sans text-xl font-bold">{order.listingTitle}</h3><p className="mt-1 text-sm text-zinc-500">{fulfillmentLabel[order.fulfillment]} · {money(order.quote.totalCents)} total</p></div><div className="flex flex-wrap gap-2">{allowedActions(order.state, persona, order).map((action) => <button key={action} className={action === "cancel" ? "rounded-full bg-red-50 px-4 py-2 text-xs font-bold text-red-700" : "rounded-full bg-brand px-4 py-2 text-xs font-bold text-white"} onClick={() => act(order, action)}>{actionLabels[action]}</button>)}</div></div></article>)}</div>}
     </main>}
 
-    {view === "create" && <main className="mx-auto min-h-[70vh] max-w-[920px] px-5 py-20 sm:px-8"><p className="text-xs font-extrabold uppercase tracking-[.16em] text-brand">Any user can earn</p><h1 className="mt-3 font-sans text-5xl font-bold tracking-tight">List an item or space</h1><section className="mt-9 rounded-[24px] bg-white p-6 shadow-soft sm:p-9"><div className="grid gap-5 sm:grid-cols-2"><label className="text-xs font-bold">Listing type<select className="mt-2 w-full rounded-xl bg-zinc-50 p-3 font-normal"><option>Rental product</option><option>Second-hand sale</option><option>Workspace</option></select></label><label className="text-xs font-bold">Title<input className="mt-2 w-full rounded-xl bg-zinc-50 p-3 font-normal" placeholder="What are you offering?"/></label><label className="text-xs font-bold">Category<select className="mt-2 w-full rounded-xl bg-zinc-50 p-3 font-normal"><option>Gaming</option><option>Computers</option><option>Cameras</option><option>Tools</option><option>Studio</option></select></label><label className="text-xs font-bold">Condition<select className="mt-2 w-full rounded-xl bg-zinc-50 p-3 font-normal"><option>Like new</option><option>Excellent</option><option>Good</option><option>Fair</option></select></label><label className="text-xs font-bold sm:col-span-2">Description<textarea className="mt-2 min-h-32 w-full rounded-xl bg-zinc-50 p-3 font-normal" placeholder="Describe condition, included accessories, and rules"/></label><label className="text-xs font-bold">Price in dollars<input type="number" min="1" className="mt-2 w-full rounded-xl bg-zinc-50 p-3 font-normal" placeholder="25"/></label><label className="text-xs font-bold">Refundable deposit<input type="number" min="0" className="mt-2 w-full rounded-xl bg-zinc-50 p-3 font-normal" placeholder="50"/></label></div><div className="mt-6 rounded-xl bg-violet-50 p-4 text-xs leading-5 text-violet-900">Exact addresses stay private. Rust recommends a fair price and limits seller adjustments to ±$5 per billing unit.</div><button className="mt-6 rounded-full bg-gradient-to-r from-brand to-violet-500 px-7 py-3.5 text-sm font-bold text-white" onClick={() => { setNotice("Demo listing saved as a private preview."); setView("market"); }}>Save demo listing</button></section></main>}
+    {view === "create" && <main className="mx-auto min-h-[70vh] max-w-[920px] px-5 py-20 sm:px-8"><p className="text-xs font-extrabold uppercase tracking-[.16em] text-brand">Any user can earn</p><h1 className="mt-3 font-sans text-5xl font-bold tracking-tight">List an item or space</h1>{realAuthConfigured && !realUser ? <section className="mt-9 rounded-[24px] bg-white p-10 text-center shadow-soft"><h2 className="font-sans text-2xl font-bold text-zinc-950">Sign in to list safely</h2><p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-zinc-500">Real account mode protects seller tools with Supabase Auth and the Rust API.</p><button onClick={() => setAuthOpen(true)} className="mt-6 rounded-full bg-brand px-7 py-3 text-sm font-bold text-white">Sign in</button></section> : <section className="mt-9 rounded-[24px] bg-white p-6 shadow-soft sm:p-9"><div className="grid gap-5 sm:grid-cols-2"><label className="text-xs font-bold">Listing type<select className="mt-2 w-full rounded-xl bg-zinc-50 p-3 font-normal"><option>Rental product</option><option>Second-hand sale</option><option>Workspace</option></select></label><label className="text-xs font-bold">Title<input className="mt-2 w-full rounded-xl bg-zinc-50 p-3 font-normal" placeholder="What are you offering?"/></label><label className="text-xs font-bold">Category<select className="mt-2 w-full rounded-xl bg-zinc-50 p-3 font-normal"><option>Gaming</option><option>Computers</option><option>Cameras</option><option>Tools</option><option>Studio</option></select></label><label className="text-xs font-bold">Condition<select className="mt-2 w-full rounded-xl bg-zinc-50 p-3 font-normal"><option>Like new</option><option>Excellent</option><option>Good</option><option>Fair</option></select></label><label className="text-xs font-bold sm:col-span-2">Description<textarea className="mt-2 min-h-32 w-full rounded-xl bg-zinc-50 p-3 font-normal" placeholder="Describe condition, included accessories, and rules"/></label><label className="text-xs font-bold">Price in dollars<input type="number" min="1" className="mt-2 w-full rounded-xl bg-zinc-50 p-3 font-normal" placeholder="25"/></label><label className="text-xs font-bold">Refundable deposit<input type="number" min="0" className="mt-2 w-full rounded-xl bg-zinc-50 p-3 font-normal" placeholder="50"/></label></div><div className="mt-6 rounded-xl bg-violet-50 p-4 text-xs leading-5 text-violet-900">Exact addresses stay private. Rust recommends a fair price and limits seller adjustments to ±$5 per billing unit.</div><button className="mt-6 rounded-full bg-gradient-to-r from-brand to-violet-500 px-7 py-3.5 text-sm font-bold text-white" onClick={() => { setNotice(realUser ? "Listing preview attached to your real demo account." : "Demo listing saved as a private preview."); setView("market"); }}>Save demo listing</button></section>}</main>}
 
     <ShopAssistant onRent={() => applyBusinessFilter("rental")} onList={() => requireSession(() => setView("create"))} onWorkspace={() => applyBusinessFilter("workspace", "studios")} onDelivery={() => applyBusinessFilter("all")}/>
+    <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} onUseDemo={openDemoIdentity}/>
     <LoginModal open={loginOpen} personas={personas} onSelect={selectDemoIdentity} onGuest={browseAsGuest} onClose={() => setLoginOpen(false)}/>
     <SiteFooter/>
   </div>;
